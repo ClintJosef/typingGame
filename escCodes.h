@@ -7,7 +7,14 @@ const char FAINT[] = "\e[2m";
 const char CUR_HOME[] = "\e[H";
 const char SAVE_CUR[] = "\e[s";
 const char RESTORE_CUR[] = "\e[u";
-const char BACKSPACE = '\127';
+
+struct Colors {
+  char *untyped;
+  char *incorrect;
+  char *correct;
+};
+
+const struct Colors COLORS = {"\e[2m", "\e[31m", "\e[38;5;76m"};
 
 void displayText(const char *text, bool faint, bool restore) {
   const char *mod = faint ? FAINT : "";

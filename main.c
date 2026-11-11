@@ -1,6 +1,7 @@
-#include "escCodes.h"
 #include "setup.h"
+#include "typingUtils.h"
 #include <ctype.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +11,8 @@ const size_t TEXT_SIZE = sizeof(TEXT) - 1;
 
 char *parseArgs(int argc, char *argv[]);
 void startGame(const char *text);
-void resetLine(const char *text, const char *input);
+void resetLine(size_t size, char input[size], const char text[size],
+               CharState charStates[size]);
 
 int main(int argc, char *argv[]) {
   if (init() == -1)
@@ -45,32 +47,54 @@ void startGame(const char *text) {
   displayText(text, true, true);
 
   size_t size = strlen(text);
+  size_t correct = 0;
   char *input = calloc(size + 1, sizeof(char));
+  CharState *charStates = malloc(sizeof(CharState) * size);
+  for (size_t i = 0; i < size; i++)
+    charStates[i] = UNTYPED;
 
   int c;
   size_t i = 0;
-  while (strcmp(text, input) != 0) {
+  bool inRange, nonEmpty, isBackspace, isPrintable, bothSpaceOrChar;
+  while (correct <= size - 1) {
     c = getchar();
 
+    // all these flags
+    inRange = i < size;
+    nonEmpty = i > 0;
+    isBackspace = c == 127 || c == 8;
+    isPrintable = isprint((unsigned char)c);
+    bothSpaceOrChar = isblank(c) == isblank(text[i]);
+
     // backspace
-    if ((c == 127 || c == 8) && i > 0) {
+    if (isBackspace && nonEmpty) {
       i--;
+      if (charStates[i] == CORRECT && correct > 0)
+        correct--;
       input[i] = '\0';
+      charStates[i] = UNTYPED;
     }
     // can be printed
-    else if (isprint(c) && i < size) {
-      input[i++] = c;
+    else if (isPrintable && bothSpaceOrChar && inRange) {
+      input[i] = c;
+      if (input[i] == text[i]) {
+        charStates[i] = CORRECT;
+        correct++;
+      } else
+        charStates[i] = INCORRECT;
+
+      i++;
       input[i] = '\0';
     }
-    resetLine(text, input);
+    resetLine(size, input, text, charStates);
   }
 
   free(input);
 }
 
-void resetLine(const char *text, const char *input) {
+void resetLine(size_t size, char input[size], const char text[size],
+               CharState charStates[size]) {
   clearLine();
   moveToCol(0);
-  displayText(text, true, true);
-  displayText(input, false, false);
+  displayHlText(size, input, text, charStates);
 }
