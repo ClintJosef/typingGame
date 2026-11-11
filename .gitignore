@@ -1,0 +1,4 @@
+.ccls-cache/
+output/
+compile_commands.json
+test.c
