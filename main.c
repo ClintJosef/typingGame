@@ -69,10 +69,9 @@ void startGame(const char *text) {
     // backspace
     if (isBackspace && nonEmpty) {
       i--;
-      if (charStates[i] == CORRECT && correct > 0)
+      if (charStates[i] == CORRECT)
         correct--;
       input[i] = '\0';
-      charStates[i] = UNTYPED;
     }
     // can be printed
     else if (isPrintable && bothSpaceOrChar && inRange) {
