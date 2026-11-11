@@ -6,26 +6,48 @@
 #include <string.h>
 
 const char *TEXT = "the quick brown fox jumps over the lazy dog";
-const size_t TEXT_SIZE = sizeof(&TEXT) / sizeof(char);
+const size_t TEXT_SIZE = sizeof(TEXT) - 1;
 
-void startGame(const char *text, size_t size);
+char *parseArgs(int argc, char *argv[]);
+void startGame(const char *text);
 void resetLine(const char *text, const char *input);
 
-int main() {
+int main(int argc, char *argv[]) {
   if (init() == -1)
     return 1;
 
-  startGame(TEXT, TEXT_SIZE);
+  // fall back to default text if no args are given
+  const char *text = argc > 1 ? parseArgs(argc, argv) : TEXT;
+  startGame(text);
 
   if (cleanup() == -1)
     return 1;
 }
 
-void startGame(const char *text, size_t size) {
+// parse every arg into one string, separated by spaces
+char *parseArgs(int argc, char *argv[]) {
+  // initial size
+  size_t size = 1; // +1 for null byte
+  for (int i = 1; i < argc; i++)
+    size += strlen(argv[i]) + 1; // +1 for space
+  char *text = malloc(sizeof(char) * size);
+
+  for (int i = 1; i < argc; i++) {
+    if (i > 1)
+      strcat(text, " ");
+    strcat(text, argv[i]);
+  }
+
+  return text;
+}
+
+void startGame(const char *text) {
   displayText(text, true, true);
 
+  size_t size = strlen(text);
   char *input = calloc(size + 1, sizeof(char));
-  unsigned c;
+
+  int c;
   size_t i = 0;
   while (strcmp(text, input) != 0) {
     c = getchar();
@@ -36,12 +58,14 @@ void startGame(const char *text, size_t size) {
       input[i] = '\0';
     }
     // can be printed
-    else if (isprint(c)) {
+    else if (isprint(c) && i < size) {
       input[i++] = c;
       input[i] = '\0';
     }
     resetLine(text, input);
   }
+
+  free(input);
 }
 
 void resetLine(const char *text, const char *input) {
