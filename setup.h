@@ -9,19 +9,20 @@ int init();
 int cleanup();
 
 int saveTermState() { return tcgetattr(0, &OLD); }
-int restoreTermState() { return tcsetattr(0, TCSADRAIN, &OLD); }
+int restoreTermState() { return tcsetattr(0, TCSAFLUSH, &OLD); }
 
 int enableCanonicalInputProcessing() {
   // read termios and tcsetattr man pages
   struct termios tc;
-  tcgetattr(0, &tc);
+  if (tcgetattr(0, &tc) == -1)
+    return -1;
 
   tc.c_cc[VMIN] = 1;
   tc.c_cc[VTIME] = 0;
   tc.c_lflag &= ~ICANON;
   tc.c_lflag &= ~ECHO;
 
-  return tcsetattr(0, TCSANOW, &tc);
+  return tcsetattr(0, TCSAFLUSH, &tc);
 }
 
 int init() {

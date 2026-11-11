@@ -1,6 +1,6 @@
 #include "escCodes.h"
 #include "setup.h"
-#include "stringUtils.h"
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -24,19 +24,21 @@ int main() {
 void startGame(const char *text, size_t size) {
   displayText(text, true, true);
 
-  char *input = malloc(sizeof(char) * size);
-  char c;
+  char *input = calloc(size + 1, sizeof(char));
+  unsigned c;
   size_t i = 0;
   while (strcmp(text, input) != 0) {
     c = getchar();
 
     // backspace
     if ((c == 127 || c == 8) && i > 0) {
-      shrinkStr(&input, i, 1);
       i--;
-    } else {
-      input[i] = c;
-      i++;
+      input[i] = '\0';
+    }
+    // can be printed
+    else if (isprint(c)) {
+      input[i++] = c;
+      input[i] = '\0';
     }
     resetLine(text, input);
   }
