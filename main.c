@@ -56,6 +56,9 @@ void startGame(const char *text, int textOffset) {
   size_t size = strlen(text);
   char *input = calloc(size + 1, sizeof(char));
 
+  // each individual char can be in one of three states:
+  // UNTYPED, CORRECT, INCORRECT
+  // used for char-by-char text coloring
   CharState *charStates = malloc(sizeof(CharState) * size);
   for (size_t i = 0; i < size; i++)
     charStates[i] = UNTYPED;
@@ -76,7 +79,7 @@ void startGame(const char *text, int textOffset) {
 
     // backspace
     if (isBackspace && nonEmpty) {
-      // handle removing newlines first
+      // handle deleting newlines first
       while (nonEmpty && text[i - 1] == '\n') {
         i--;
         correct--;
