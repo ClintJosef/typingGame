@@ -1,5 +1,6 @@
 #include "setup.h"
 #include "stopwatch.h"
+#include "typingUtils.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
