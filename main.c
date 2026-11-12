@@ -110,9 +110,10 @@ void startGame(const char *text, int textOffset) {
     // always gotta have the null byte
     input[i] = '\0';
 
+    // printing the text to the screen
     moveCursor(textOffset, 0);
     displayText(text, true, true);
-    displayHlText(i, input, text, charStates);
+    displayInput(i, input, text, charStates);
   }
 
   // cleanup

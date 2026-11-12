@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,6 +30,7 @@ struct Colors {
 
 const struct Colors COLORS = {"\e[2m", "\e[31m", "\e[38;5;76m"};
 
+void ansiPrint(int modes, ...);
 void moveCursor(int row, int col);
 void moveToCol(int col);
 void hideCursor();
@@ -37,15 +39,31 @@ void eraseScreen();
 void resetModes();
 char *getCharColor(CharState charState);
 void displayText(const char *text, bool faint, bool restore);
-void displayHlText(size_t size, char input[size], const char text[size],
-                   CharState charStates[size]);
+void displayInput(size_t size, char input[size], const char text[size],
+                  CharState charStates[size]);
+static char *charToStr(char c);
+
+// woah, variadic function
+// first arg has to be how many args were passed (minus one)
+// note that this doesnt work for plain char's
+// this is pretty much just a really bad printf that i thought was cool
+void ansiPrint(int modes, ...) {
+  va_list args;
+  va_start(args, modes);
+
+  for (int i = 0; i < modes; i++) {
+    printf("%s", va_arg(args, char *));
+  }
+
+  va_end(args);
+}
 
 void moveCursor(int row, int col) { printf("\e[%d;%df", row, col); }
 void moveToCol(int col) { printf("\e[%dG", col); }
-void hideCursor() { printf("%s", HIDDEN); }
-void showCursor() { printf("%s", SHOWN); }
-void eraseScreen() { printf("%s", ERASE_SCREEN); }
-void resetModes() { printf("%s", RESET); }
+void hideCursor() { ansiPrint(1, HIDDEN); }
+void showCursor() { ansiPrint(1, SHOWN); }
+void eraseScreen() { ansiPrint(1, ERASE_SCREEN); }
+void resetModes() { ansiPrint(1, RESET); }
 
 char *getCharColor(CharState charState) {
   char *color;
@@ -64,25 +82,26 @@ char *getCharColor(CharState charState) {
   return color;
 }
 
-// pretty self explanatory
 void displayText(const char *text, bool faint, bool restore) {
   const char *mod = faint ? FAINT : "";
   const char *res = restore ? RESTORE_CUR : "";
 
-  printf("%s%s%s%s%s", SAVE_CUR, mod, text, RESET, res);
+  ansiPrint(5, SAVE_CUR, mod, text, RESET, res);
 }
 
 // colorizes each character based their status
-void displayHlText(size_t size, char input[size], const char text[size],
-                   CharState charStates[size]) {
+void displayInput(size_t size, char input[size], const char text[size],
+                  CharState charStates[size]) {
   size_t i = 0;
   for (; i < size; i++) {
     // if a space is over a char, show that char instead (but faint)
     if (!isblank(text[i]) && isblank(input[i]))
-      printf("%s%c%s", FAINT, text[i], RESET);
+      printf("%s%c", FAINT, text[i]);
 
     else
-      printf("%s%c%s", getCharColor(charStates[i]), input[i], RESET);
+      printf("%s%c", getCharColor(charStates[i]), input[i]);
+
+    resetModes();
   }
 
   // custom cursor basically
