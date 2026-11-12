@@ -7,11 +7,10 @@
 #include <string.h>
 
 const char *TEXT = "the quick brown fox\n\njumps over the lazy dog";
+const int TEXT_OFFSET = 2;
 
 char *parseArgs(int argc, char *argv[], const char *defaultText);
-void startGame(const char *text);
-void display(size_t size, char input[size], const char text[size],
-             CharState charStates[size]);
+void startGame(const char *text, int textOffset);
 
 int main(int argc, char *argv[]) {
   if (init() == -1)
@@ -19,7 +18,7 @@ int main(int argc, char *argv[]) {
 
   char *text = parseArgs(argc, argv, TEXT);
   pthread_t stopwatch = startStopwatch();
-  startGame(text);
+  startGame(text, TEXT_OFFSET);
 
   killThread(stopwatch);
   if (cleanup() == -1)
@@ -49,9 +48,9 @@ char *parseArgs(int argc, char *argv[], const char *defaultText) {
 }
 
 // main loop
-void startGame(const char *text) {
+void startGame(const char *text, int textOffset) {
   // move to row 2 since the stopwatch is in row 1
-  moveCursor(2, 0);
+  moveCursor(textOffset, 0);
   displayText(text, true, true);
 
   size_t size = strlen(text);
@@ -111,17 +110,12 @@ void startGame(const char *text) {
     // always gotta have the null byte
     input[i] = '\0';
 
-    display(i, input, text, charStates);
+    moveCursor(textOffset, 0);
+    displayText(text, true, true);
+    displayHlText(i, input, text, charStates);
   }
 
   // cleanup
   free(input);
   free(charStates);
-}
-
-void display(size_t size, char input[size], const char text[size],
-             CharState charStates[size]) {
-  moveCursor(2, 0);
-  displayText(text, true, true);
-  displayHlText(size, input, text, charStates);
 }
