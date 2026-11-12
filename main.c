@@ -18,9 +18,10 @@ int main(int argc, char *argv[]) {
     return 1;
 
   char *text = parseArgs(argc, argv, TEXT);
-  startStopwatchThread();
+  pthread_t stopwatch = startStopwatch();
   startGame(text);
 
+  killThread(stopwatch);
   if (cleanup() == -1)
     return 1;
 }
@@ -54,11 +55,12 @@ void startGame(const char *text) {
   displayText(text, true, true);
 
   size_t size = strlen(text);
-  size_t correct = 0;
-  char *input = calloc(size + 1, sizeof(char));
+  char *input = malloc(sizeof(char) * (size + 1));
+
   CharState *charStates = malloc(sizeof(CharState) * size);
   for (size_t i = 0; i < size; i++)
     charStates[i] = UNTYPED;
+  size_t correct = 0;
 
   int c;
   size_t i = 0;
