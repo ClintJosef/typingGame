@@ -17,8 +17,10 @@ int main(int argc, char *argv[]) {
     return 1;
 
   // fall back to default text if no args are given
-  const char *text = argc > 1 ? parseArgs(argc, argv) : TEXT;
-  startGame(text);
+  if (argc > 1)
+    startGame(parseArgs(argc, argv));
+  else
+    startGame(TEXT);
 
   if (cleanup() == -1)
     return 1;
@@ -54,7 +56,7 @@ void startGame(const char *text) {
 
   int c;
   size_t i = 0;
-  bool inRange, nonEmpty, isBackspace, isEnter, isPrintable, bothSpaceOrChar;
+  bool inRange, nonEmpty, isBackspace, isPrintable;
   while (correct < size) {
     c = getchar();
 
@@ -62,9 +64,7 @@ void startGame(const char *text) {
     inRange = i < size;
     nonEmpty = i > 0;
     isBackspace = c == 127 || c == 8;
-    isEnter = c == 10;
     isPrintable = isprint((unsigned char)c);
-    bothSpaceOrChar = isblank(c) == isblank(text[i]);
 
     // backspace
     if (isBackspace && nonEmpty) {
@@ -99,11 +99,11 @@ void startGame(const char *text) {
     }
 
     resetLine(i, input, text, charStates);
-    printf("\n\n\n\n\n\n\n%zu, %zu", correct, size);
   }
 
   // cleanup
   free(input);
+  free(charStates);
 }
 
 void resetLine(size_t size, char input[size], const char text[size],
