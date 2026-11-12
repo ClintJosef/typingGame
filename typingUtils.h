@@ -7,6 +7,8 @@
 const char RESET[] = "\e[0m";
 const char BOLD[] = "\e[1m";
 const char FAINT[] = "\e[2m";
+const char UNDERLINE[] = "\e[4m";
+const char BLINKING[] = "\e[5m";
 const char HIDDEN[] = "\e[?25l";
 const char SHOWN[] = "\e[?25h";
 const char CUR_HOME[] = "\e[H";
@@ -73,15 +75,16 @@ void displayText(const char *text, bool faint, bool restore) {
 // colorizes each character based their status
 void displayHlText(size_t size, char input[size], const char text[size],
                    CharState charStates[size]) {
-  for (size_t i = 0; i < size; i++) {
-    // don't let space characters hide the text underneath
-    bool bothSpaces = isblank(input[i]) == isblank(text[i]);
-    if (!bothSpaces && isblank(input[i]))
+  size_t i = 0;
+  for (; i < size; i++) {
+    // if a space is over a char, show that char instead (but faint)
+    if (!isblank(text[i]) && isblank(input[i]))
       printf("%s%c%s", FAINT, text[i], RESET);
 
-    else {
-      char *color = getCharColor(charStates[i]);
-      printf("%s%c%s", color, input[i], RESET);
-    }
+    else
+      printf("%s%c%s", getCharColor(charStates[i]), input[i], RESET);
   }
+
+  // custom cursor basically
+  printf("%s%s%c%s", BOLD, UNDERLINE, text[i], RESET);
 }

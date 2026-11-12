@@ -32,7 +32,8 @@ int init() {
     return -1;
   if (enableCanonicalInputProcessing() == -1)
     return -1;
-  moveCursor(0, 0);
+  moveCursor(1, 1);
+  hideCursor();
   eraseScreen();
   return 0;
 }
