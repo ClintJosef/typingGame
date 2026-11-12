@@ -37,7 +37,7 @@ char *parseArgs(int argc, char *argv[], const char *defaultText) {
   size_t size = 1; // +1 for null byte
   for (int i = 1; i < argc; i++)
     size += strlen(argv[i]) + 1; // +1 for space
-  char *text = malloc(sizeof(char) * size);
+  char *text = calloc(size + 1, sizeof(char));
 
   for (int i = 1; i < argc; i++) {
     if (i > 1)
@@ -55,7 +55,7 @@ void startGame(const char *text) {
   displayText(text, true, true);
 
   size_t size = strlen(text);
-  char *input = malloc(sizeof(char) * (size + 1));
+  char *input = calloc(size + 1, sizeof(char));
 
   CharState *charStates = malloc(sizeof(CharState) * size);
   for (size_t i = 0; i < size; i++)
