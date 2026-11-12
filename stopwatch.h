@@ -1,3 +1,6 @@
+#pragma once
+
+#include "typingUtils.h"
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -57,7 +60,8 @@ static void *stopwatchThread(void *arg) {
     struct timespec elapsed = elapsedTs();
 
     // hide cursor, move to pos (1, 1) in the terminal, and print the time
-    printf("\e[?25l\e[1;1fTime taken: %.2lfs\n", tsToDouble(&elapsed));
+    moveCursor(1, 1);
+    printf("%sTime taken: %.2lfs", HIDDEN, tsToDouble(&elapsed));
 
     nanosleep(&sleepInterval, NULL);
   }

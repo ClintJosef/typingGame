@@ -1,3 +1,5 @@
+#pragma once // oh my god this is so nice it just prevents circular imports
+
 #include "typingUtils.h"
 #include <stdio.h>
 #include <termios.h>
