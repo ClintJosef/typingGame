@@ -1,4 +1,5 @@
 .ccls-cache/
 output/
+shlorem/
 compile_commands.json
 test.c

@@ -1,5 +1,4 @@
 #include "setup.h"
-#include "typingUtils.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -55,14 +54,15 @@ void startGame(const char *text) {
 
   int c;
   size_t i = 0;
-  bool inRange, nonEmpty, isBackspace, isPrintable, bothSpaceOrChar;
-  while (correct <= size - 1) {
+  bool inRange, nonEmpty, isBackspace, isEnter, isPrintable, bothSpaceOrChar;
+  while (correct < size) {
     c = getchar();
 
     // all these flags
     inRange = i < size;
     nonEmpty = i > 0;
     isBackspace = c == 127 || c == 8;
+    isEnter = c == 10;
     isPrintable = isprint((unsigned char)c);
     bothSpaceOrChar = isblank(c) == isblank(text[i]);
 
@@ -72,8 +72,7 @@ void startGame(const char *text) {
       if (charStates[i] == CORRECT)
         correct--;
       input[i] = '\0';
-    }
-    // can be printed
+    } // can be printed
     else if (isPrintable && bothSpaceOrChar && inRange) {
       input[i] = c;
       if (input[i] == text[i]) {
@@ -85,15 +84,29 @@ void startGame(const char *text) {
       i++;
       input[i] = '\0';
     }
-    resetLine(size, input, text, charStates);
+
+    // newline
+    if (text[i] == '\n') {
+      if (charStates[i - 1] == CORRECT)
+        correct++;
+      input[i] = '\n';
+      i++;
+      input[i] = '\0';
+    }
+
+    resetLine(i, input, text, charStates);
   }
 
+  // cleanup
   free(input);
 }
 
 void resetLine(size_t size, char input[size], const char text[size],
                CharState charStates[size]) {
-  clearLine();
-  moveToCol(0);
+  eraseScreen();
+  moveCursor(0, 0);
+  hideCursor();
+  displayText(text, true, true);
   displayHlText(size, input, text, charStates);
+  showCursor();
 }

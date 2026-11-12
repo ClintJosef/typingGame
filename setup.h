@@ -1,3 +1,5 @@
+#include "typingUtils.h"
+#include <stdio.h>
 #include <termios.h>
 
 static struct termios OLD;
@@ -30,7 +32,14 @@ int init() {
     return -1;
   if (enableCanonicalInputProcessing() == -1)
     return -1;
+  moveCursor(0, 0);
+  eraseScreen();
   return 0;
 }
 
-int cleanup() { return restoreTermState(); }
+int cleanup() {
+  int n = restoreTermState();
+  resetModes();
+  showCursor();
+  return n;
+}
