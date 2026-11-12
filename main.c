@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char *TEXT = "the quick brown fox jumps over the lazy dog";
+const char *TEXT = "the quick brown fox\n\njumps over the lazy dog";
 
 char *parseArgs(int argc, char *argv[]);
 void startGame(const char *text);
@@ -56,7 +56,7 @@ void startGame(const char *text) {
 
   int c;
   size_t i = 0;
-  bool inRange, nonEmpty, isBackspace, isPrintable;
+  bool inRange, nonEmpty, isBackspace, isPrintable, isMatching;
   while (correct < size) {
     c = getchar();
 
@@ -65,38 +65,43 @@ void startGame(const char *text) {
     nonEmpty = i > 0;
     isBackspace = c == 127 || c == 8;
     isPrintable = isprint((unsigned char)c);
+    isMatching = c == text[i];
 
     // backspace
     if (isBackspace && nonEmpty) {
-      if (charStates[--i] == CORRECT)
+      // handle removing newlines first
+      while (nonEmpty && text[i - 1] == '\n') {
+        i--;
         correct--;
-      input[i] = '\0';
+      }
+
+      // normal deletion
+      i--;
+      if (charStates[i] == CORRECT)
+        correct--;
     }
 
     // can be printed
     else if (isPrintable && inRange) {
-      input[i] = c;
-      if (input[i] == text[i]) {
+      // match chars
+      if (isMatching) {
         charStates[i] = CORRECT;
         correct++;
       } else
         charStates[i] = INCORRECT;
-
-      input[++i] = '\0';
+      input[i] = c;
+      i++;
     }
 
-    // newline
+    // handle adding newlines
     while (text[i] == '\n') {
-      // TODO: get backspace to decrement enough
-      if (isBackspace) {
-        correct--;
-        input[i--] = '\0';
-      } else {
-        correct++;
-        input[i++] = '\n';
-        input[i] = '\0';
-      }
+      correct++;
+      input[i] = '\n';
+      i++;
     }
+
+    // always gotta have the null byte
+    input[i] = '\0';
 
     resetLine(i, input, text, charStates);
   }
@@ -108,7 +113,6 @@ void startGame(const char *text) {
 
 void resetLine(size_t size, char input[size], const char text[size],
                CharState charStates[size]) {
-  eraseScreen();
   moveCursor(0, 0);
   hideCursor();
   displayText(text, true, true);
