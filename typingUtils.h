@@ -74,7 +74,14 @@ void displayText(const char *text, bool faint, bool restore) {
 void displayHlText(size_t size, char input[size], const char text[size],
                    CharState charStates[size]) {
   for (size_t i = 0; i < size; i++) {
-    char *color = getCharColor(charStates[i]);
-    printf("%s%c%s", color, input[i], RESET);
+    // don't let space characters hide the text underneath
+    bool bothSpaces = isblank(input[i]) == isblank(text[i]);
+    if (!bothSpaces && isblank(input[i]))
+      printf("%s%c%s", FAINT, text[i], RESET);
+
+    else {
+      char *color = getCharColor(charStates[i]);
+      printf("%s%c%s", color, input[i], RESET);
+    }
   }
 }

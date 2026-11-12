@@ -6,7 +6,6 @@
 #include <string.h>
 
 const char *TEXT = "the quick brown fox jumps over the lazy dog";
-const size_t TEXT_SIZE = sizeof(TEXT) - 1;
 
 char *parseArgs(int argc, char *argv[]);
 void startGame(const char *text);
@@ -42,6 +41,7 @@ char *parseArgs(int argc, char *argv[]) {
   return text;
 }
 
+// main loop
 void startGame(const char *text) {
   displayText(text, true, true);
 
@@ -68,12 +68,13 @@ void startGame(const char *text) {
 
     // backspace
     if (isBackspace && nonEmpty) {
-      i--;
-      if (charStates[i] == CORRECT)
+      if (charStates[--i] == CORRECT)
         correct--;
       input[i] = '\0';
-    } // can be printed
-    else if (isPrintable && bothSpaceOrChar && inRange) {
+    }
+
+    // can be printed
+    else if (isPrintable && inRange) {
       input[i] = c;
       if (input[i] == text[i]) {
         charStates[i] = CORRECT;
@@ -81,20 +82,24 @@ void startGame(const char *text) {
       } else
         charStates[i] = INCORRECT;
 
-      i++;
-      input[i] = '\0';
+      input[++i] = '\0';
     }
 
     // newline
-    if (text[i] == '\n') {
-      if (charStates[i - 1] == CORRECT)
+    while (text[i] == '\n') {
+      // TODO: get backspace to decrement enough
+      if (isBackspace) {
+        correct--;
+        input[i--] = '\0';
+      } else {
         correct++;
-      input[i] = '\n';
-      i++;
-      input[i] = '\0';
+        input[i++] = '\n';
+        input[i] = '\0';
+      }
     }
 
     resetLine(i, input, text, charStates);
+    printf("\n\n\n\n\n\n\n%zu, %zu", correct, size);
   }
 
   // cleanup
