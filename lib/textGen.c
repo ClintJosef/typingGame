@@ -12,8 +12,10 @@ bash commands to populate these (assuming $words is the path to ^):
              words/lower.txt
 adjust {3,10} for the length range of the words
 */
-static const char LOWER_WORDS_FP[] = "words/lower.txt";
-static const char UPPER_WORDS_FP[] = "words/upper.txt";
+static const char LOWER_WORDS_FP[] =
+    "/Users/hamburger/Dev/C/typing/words/lower.txt";
+static const char UPPER_WORDS_FP[] =
+    "/Users/hamburger/Dev/C/typing/words/upper.txt";
 
 char *generateText(struct TextSize *tsz) {
   FILE *lower = fopen(LOWER_WORDS_FP, "r");
