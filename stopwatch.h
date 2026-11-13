@@ -92,7 +92,7 @@ static void *stopwatchThread(void *arg) {
     moveCursor(1, 1);
     ansiPrint(1, HIDDEN);
 
-    printf("Time taken: %.2lfs\n", elapsedTime);
+    printf("%s\rTime taken: %.2lfs\n", ERASE_LINE, elapsedTime);
     displayTypingStats(&currStats, elapsedTime);
     fflush(stdout);
 
