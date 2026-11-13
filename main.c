@@ -1,7 +1,7 @@
-#include "setup.h"
-#include "stopwatch.h"
-#include "textGen.h"
-#include "typingUtils.h"
+#include "lib/setup.h"
+#include "lib/stopwatch.h"
+#include "lib/textGen.h"
+#include "lib/typingUtils.h"
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>

@@ -1,5 +1,4 @@
-#pragma once
-
+#include "textGen.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,28 +12,8 @@ bash commands to populate these (assuming $words is the path to ^):
              words/lower.txt
 adjust {3,10} for the length range of the words
 */
-
-const char LOWER_WORDS_FP[] = "words/lower.txt";
-const char UPPER_WORDS_FP[] = "words/upper.txt";
-
-struct FileInfo {
-  size_t lines;        // num of lines in a file
-  size_t *lineOffsets; // byte offset of each line
-};
-
-struct TextSize {
-  int paragraphs;
-  int minSntn;
-  int maxSntn;
-  int minWordSntn;
-  int maxWordSntn;
-};
-
-char *generateText(struct TextSize *tsz);
-char *randomWord(FILE *words, struct FileInfo *fi);
-void getFileInfo(FILE *file, struct FileInfo *fi);
-int randRange(int min, int max);
-size_t appendStr(char **text, size_t size, char *add);
+static const char LOWER_WORDS_FP[] = "words/lower.txt";
+static const char UPPER_WORDS_FP[] = "words/upper.txt";
 
 char *generateText(struct TextSize *tsz) {
   FILE *lower = fopen(LOWER_WORDS_FP, "r");

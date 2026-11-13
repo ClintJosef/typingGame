@@ -1,5 +1,4 @@
-#pragma once
-
+#include "typingUtils.h"
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -7,49 +6,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char RESET[] = "\e[0m";
-const char BOLD[] = "\e[1m";
-const char FAINT[] = "\e[2m";
-const char UNDERLINE[] = "\e[4m";
-const char BLINKING[] = "\e[5m";
-const char HIDDEN[] = "\e[?25l";
-const char SHOWN[] = "\e[?25h";
-const char CUR_HOME[] = "\e[H";
-const char SAVE_CUR[] = "\e[s";
-const char RESTORE_CUR[] = "\e[u";
-const char ERASE_LINE[] = "\e[2K";
-const char SAVE_SCREEN[] = "\e[?47h";
-const char RESTORE_SCREEN[] = "\e[?47l";
-const char ERASE_SCREEN[] = "\e[2J";
+const char RESET[] = "\033[0m";
+const char BOLD[] = "\033[1m";
+const char FAINT[] = "\033[2m";
+const char UNDERLINE[] = "\033[4m";
+const char BLINKING[] = "\033[5m";
+const char HIDDEN[] = "\033[?25l";
+const char SHOWN[] = "\033[?25h";
+const char CUR_HOME[] = "\033[H";
+const char SAVE_CUR[] = "\033[s";
+const char RESTORE_CUR[] = "\033[u";
+const char ERASE_LINE[] = "\033[2K";
+const char SAVE_SCREEN[] = "\033[?47h";
+const char RESTORE_SCREEN[] = "\033[?47l";
+const char ERASE_SCREEN[] = "\033[2J";
 
-typedef enum { UNTYPED, INCORRECT, CORRECT } CharState;
-
-struct Colors {
-  char *untyped;
-  char *incorrect;
-  char *correct;
-};
-
-struct TypingStats {
-  size_t correct;
-  size_t typed;
-};
-
-const struct Colors COLORS = {"\e[2m", "\e[31m", "\e[38;5;76m"};
-
-void ansiPrint(int modes, ...);
-void moveCursor(int row, int col);
-void moveToCol(int col);
-void hideCursor();
-void showCursor();
-void eraseScreen();
-void resetModes();
-char *getCharColor(CharState charState);
-void displayText(char *text, bool faint, bool restore);
-void displayInput(size_t size, char input[size], char text[size],
-                  CharState charStates[size]);
-void displayTypingStats(struct TypingStats *tpStats, double elapsedTime);
-static char *charToStr(char c);
+const struct Colors COLORS = {"\033[2m", "\033[31m", "\033[38;5;76m"};
 
 // woah, variadic function
 // first arg has to be how many args were passed (minus one)
@@ -66,14 +38,14 @@ void ansiPrint(int modes, ...) {
   va_end(args);
 }
 
-void moveCursor(int row, int col) { printf("\e[%d;%df", row, col); }
-void moveToCol(int col) { printf("\e[%dG", col); }
-void hideCursor() { ansiPrint(1, HIDDEN); }
-void showCursor() { ansiPrint(1, SHOWN); }
-void eraseScreen() { ansiPrint(1, ERASE_SCREEN); }
-void resetModes() { ansiPrint(1, RESET); }
+void moveCursor(int row, int col) { printf("\033[%d;%df", row, col); }
+void moveToCol(int col) { printf("\033[%dG", col); }
+void hideCursor(void) { ansiPrint(1, HIDDEN); }
+void showCursor(void) { ansiPrint(1, SHOWN); }
+void eraseScreen(void) { ansiPrint(1, ERASE_SCREEN); }
+void resetModes(void) { ansiPrint(1, RESET); }
 
-char *getCharColor(CharState charState) {
+const char *getCharColor(CharState charState) {
   char *color;
   switch (charState) {
   case INCORRECT:

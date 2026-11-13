@@ -1,8 +1,4 @@
-// could probably come up with a better name but this displays a stopwatch and
-// the user stats from a separate thread
-
-#pragma once
-
+#include "stopwatch.h"
 #include "typingUtils.h"
 #include <pthread.h>
 #include <stdatomic.h>
@@ -25,17 +21,10 @@ static _Atomic(double) elapsedTime;
 static _Atomic(bool) running;
 static _Atomic(struct TypingStats) stats;
 
-void startTs();
-void elapsedTs(struct timespec *ts);
-void killStopWatch();
-void updateStats(struct TypingStats *userStats);
-void startStopwatch();
-double pollElapsedSec();
-
 static void *stopwatchThread(void *arg);
 static double tsToDouble(struct timespec *ts);
 
-void startTs() {
+void startTs(void) {
   // basically just a higher resolution time()
   timespec_get(&start, TIME_UTC);
 }
@@ -53,10 +42,10 @@ void elapsedTs(struct timespec *ts) {
 }
 
 // call for stopwatch thread to kill itself
-void killStopWatch() { running = false; }
+void killStopWatch(void) { running = false; }
 
 // start the stopwatch in a separate thread
-void startStopwatch() {
+void startStopwatch(void) {
   running = true;
 
   pthread_t thread;
@@ -66,7 +55,7 @@ void startStopwatch() {
 // update stats from other threads
 void updateStats(struct TypingStats *userStats) { stats = *userStats; }
 
-double pollElapsedSec() { return elapsedTime; }
+double pollElapsedSec(void) { return elapsedTime; }
 
 // actual thread
 static void *stopwatchThread(void *arg) {
