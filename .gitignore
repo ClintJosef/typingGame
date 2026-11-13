@@ -3,3 +3,4 @@ output/
 shlorem/
 compile_commands.json
 test.c
+.gitignore
