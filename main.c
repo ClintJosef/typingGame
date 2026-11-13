@@ -100,10 +100,9 @@ void startGame(char *text, int textOffset) {
 
       // normal deletion
       i--;
-      if (charStates[i] == CORRECT) {
+      userStats.typed--;
+      if (charStates[i] == CORRECT)
         userStats.correct--;
-        userStats.typed--;
-      }
     }
 
     // can be printed
