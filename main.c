@@ -1,5 +1,6 @@
 #include "setup.h"
 #include "stopwatch.h"
+#include "textGen.h"
 #include "typingUtils.h"
 #include <ctype.h>
 #include <stdbool.h>
@@ -7,31 +8,39 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char *TEXT = "the quick brown fox\n\njumps over the lazy dog";
 const int TEXT_OFFSET = 2;
+const struct TextSize DEFAULT_TSZ = {
+    2, // paragraphs
+    3, // min sentences per paragraph
+    5, // max ''
+    4, // min words per sentence
+    6  // max ''
+};
 
-char *parseArgs(int argc, char *argv[], const char *defaultText);
-void startGame(const char *text, int textOffset);
+char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz);
+void startGame(char *text, int textOffset);
 
 int main(int argc, char *argv[]) {
+  srand(time(NULL));
+
   if (init() == -1)
     return 1;
 
-  char *text = parseArgs(argc, argv, TEXT);
+  char *text = parseArgs(argc, argv, &DEFAULT_TSZ);
   pthread_t stopwatch = startStopwatch();
   startGame(text, TEXT_OFFSET);
 
-  killThread(stopwatch);
+  // killThread(stopwatch);
   if (cleanup() == -1)
     return 1;
 }
 
 // parse every arg into one string, separated by spaces
-char *parseArgs(int argc, char *argv[], const char *defaultText) {
+char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
   // fall back to default text if no args are given
   if (argc < 2)
     // have to do this to avoid "disqualifying" const
-    return (char *)defaultText;
+    return generateText((struct TextSize *)defaultTsz);
 
   // initial size
   size_t size = 1; // +1 for null byte
@@ -39,6 +48,7 @@ char *parseArgs(int argc, char *argv[], const char *defaultText) {
     size += strlen(argv[i]) + 1; // +1 for space
   char *text = calloc(size + 1, sizeof(char));
 
+  // concatenate
   for (int i = 1; i < argc; i++) {
     if (i > 1)
       strcat(text, " ");
@@ -49,7 +59,7 @@ char *parseArgs(int argc, char *argv[], const char *defaultText) {
 }
 
 // main loop
-void startGame(const char *text, int textOffset) {
+void startGame(char *text, int textOffset) {
   // move to row 2 since the stopwatch is in row 1
   moveCursor(textOffset, 0);
   displayText(text, true, true);

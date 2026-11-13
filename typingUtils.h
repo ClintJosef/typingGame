@@ -40,8 +40,8 @@ void showCursor();
 void eraseScreen();
 void resetModes();
 char *getCharColor(CharState charState);
-void displayText(const char *text, bool faint, bool restore);
-void displayInput(size_t size, char input[size], const char text[size],
+void displayText(char *text, bool faint, bool restore);
+void displayInput(size_t size, char input[size], char text[size],
                   CharState charStates[size]);
 static char *charToStr(char c);
 
@@ -84,7 +84,7 @@ char *getCharColor(CharState charState) {
   return color;
 }
 
-void displayText(const char *text, bool faint, bool restore) {
+void displayText(char *text, bool faint, bool restore) {
   const char *mod = faint ? FAINT : "";
   const char *res = restore ? RESTORE_CUR : "";
 
@@ -92,7 +92,7 @@ void displayText(const char *text, bool faint, bool restore) {
 }
 
 // colorizes each character based their status
-void displayInput(size_t size, char input[size], const char text[size],
+void displayInput(size_t size, char input[size], char text[size],
                   CharState charStates[size]) {
   size_t i = 0;
   for (; i < size; i++) {

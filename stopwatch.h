@@ -25,6 +25,11 @@ void startTs() {
   timespec_get(&start, TIME_UTC);
 }
 
+void killThread(pthread_t thread) {
+  // second arg is the signal (0 to error check)
+  pthread_kill(thread, 0);
+}
+
 // start the stopwatch in a separate thread
 pthread_t startStopwatch() {
   pthread_t thread;
@@ -62,12 +67,8 @@ static void *stopwatchThread(void *arg) {
     // hide cursor, move to pos (1, 1) in the terminal, and print the time
     moveCursor(1, 1);
     printf("%sTime taken: %.2lfs", HIDDEN, tsToDouble(&elapsed));
+    fflush(stdout);
 
     nanosleep(&sleepInterval, NULL);
   }
-}
-
-void killThread(pthread_t thread) {
-  // second arg is the signal (0 to error check)
-  pthread_kill(thread, 0);
 }
