@@ -1,4 +1,5 @@
 .ccls-cache/
+**/**.DS_STORE
 output/
 shlorem/
 compile_commands.json
