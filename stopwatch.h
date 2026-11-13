@@ -55,7 +55,6 @@ pthread_t startStopwatch() {
   return thread;
 }
 
-// will there be a race condition if elapsedTime is read-only everywhere else?
 double pollElapsedSec() { return elapsedTime; }
 
 static double tsToDouble(struct timespec *ts) {
