@@ -21,18 +21,15 @@ char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz);
 void startGame(char *text, int textOffset);
 
 int main(int argc, char *argv[]) {
+  init();
   srand(time(NULL));
-
-  if (init() == -1)
-    return 1;
 
   char *text = parseArgs(argc, argv, &DEFAULT_TSZ);
   startStopwatch();
   startGame(text, TEXT_OFFSET);
 
   killStopWatch();
-  if (cleanup() == -1)
-    return 1;
+  cleanup();
 }
 
 // parse every arg into one string, separated by spaces
@@ -87,7 +84,7 @@ void startGame(char *text, int textOffset) {
     nonEmpty = i > 0;
     isBackspace = c == 127 || c == 8;
     isPrintable = isprint((unsigned char)c);
-    isMatching = c == text[i];
+    isMatching = inRange && c == text[i];
 
     // backspace
     if (isBackspace && nonEmpty) {
