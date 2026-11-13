@@ -30,6 +30,11 @@ struct Colors {
   char *correct;
 };
 
+struct TypingStats {
+  size_t correct;
+  size_t typed;
+};
+
 const struct Colors COLORS = {"\e[2m", "\e[31m", "\e[38;5;76m"};
 
 void ansiPrint(int modes, ...);
@@ -43,6 +48,7 @@ char *getCharColor(CharState charState);
 void displayText(char *text, bool faint, bool restore);
 void displayInput(size_t size, char input[size], char text[size],
                   CharState charStates[size]);
+void displayTypingStats(struct TypingStats *tpStats, double elapsedTime);
 static char *charToStr(char c);
 
 // woah, variadic function
@@ -108,4 +114,12 @@ void displayInput(size_t size, char input[size], char text[size],
 
   // custom cursor basically
   printf("%s%s%c%s", BOLD, UNDERLINE, text[i], RESET);
+}
+
+void displayTypingStats(struct TypingStats *tpStats, double elapsedTime) {
+  // arbitrary words of length 5
+  double wpm = (double)tpStats->typed / 5 / elapsedTime * 60;
+  double accuracy = (double)tpStats->correct / tpStats->typed * 100;
+
+  printf("Wpm: %.1lf, Accuracy: %.1lf ", wpm, accuracy);
 }

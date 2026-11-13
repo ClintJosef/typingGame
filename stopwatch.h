@@ -1,3 +1,6 @@
+// could probably come up with a better name but this displays a stopwatch and
+// the user stats from a separate thread
+
 #pragma once
 
 #include "typingUtils.h"
@@ -8,22 +11,29 @@
 #include <time.h>
 #include <unistd.h>
 
+// update frequency of stopwatch thread
+static const long long SLEEP_INTERVAL_MS = 250;
+
 // timespec just stores a number of seconds (time_t) and nanoseconds (unsigned
 // long long?)
 static struct timespec start;
-// atomic basically just means elapsedTime is thread-safe (but not lock-free)
+
+// atomic basically means these are thread-safe (but not lock-free)
 // at the cost of some extra overhead
+// for structs its still recommended to access them indirectly via atomic_load()
 static _Atomic(double) elapsedTime;
-static const long long SLEEP_INTERVAL_MS = 250;
+static _Atomic(bool) running;
+static _Atomic(struct TypingStats) stats;
 
 void startTs();
 void elapsedTs(struct timespec *ts);
-void killThread(pthread_t thread);
-pthread_t startStopwatch();
+void killStopWatch();
+void updateStats(struct TypingStats *userStats);
+void startStopwatch();
 double pollElapsedSec();
 
-static double tsToDouble(struct timespec *ts);
 static void *stopwatchThread(void *arg);
+static double tsToDouble(struct timespec *ts);
 
 void startTs() {
   // basically just a higher resolution time()
@@ -42,42 +52,57 @@ void elapsedTs(struct timespec *ts) {
   }
 }
 
-void killThread(pthread_t thread) {
-  // second arg is the signal (0 to error check)
-  pthread_kill(thread, 1);
-}
+// call for stopwatch thread to kill itself
+void killStopWatch() { running = false; }
 
 // start the stopwatch in a separate thread
-pthread_t startStopwatch() {
+void startStopwatch() {
+  running = true;
+
   pthread_t thread;
   pthread_create(&thread, NULL, &stopwatchThread, NULL);
-
-  return thread;
 }
+
+// update stats from other threads
+void updateStats(struct TypingStats *userStats) { stats = *userStats; }
 
 double pollElapsedSec() { return elapsedTime; }
 
-static double tsToDouble(struct timespec *ts) {
-  return (double)ts->tv_sec + (double)ts->tv_nsec / 1e9;
-}
-
+// actual thread
 static void *stopwatchThread(void *arg) {
   // convert miliseconds to nanoseconds
   struct timespec sleepInterval = {0, SLEEP_INTERVAL_MS * 1e6};
   struct timespec elapsed;
 
+  // copy of atomic struct
+  struct TypingStats currStats;
+
   // start the stopwatch
   startTs();
 
-  // run until killThread() is externally called
-  while (true) {
+  // run until killStopWatch is called
+  while (running) {
+    // thread-safe way to access a struct
+    currStats = atomic_load(&stats);
+
+    elapsedTs(&elapsed);
+    elapsedTime = tsToDouble(&elapsed);
+
+    // set cursor position and terminal mode
     moveCursor(1, 1);
-    printf("%sTime taken: %.2lfs", HIDDEN, elapsedTime);
+    ansiPrint(1, HIDDEN);
+
+    printf("Time taken: %.2lfs\n", elapsedTime);
+    displayTypingStats(&currStats, elapsedTime);
     fflush(stdout);
 
     // lap every SLEEP_INTERVAL_MS ms
     nanosleep(&sleepInterval, NULL);
-    elapsedTs(&elapsed);
-    elapsedTime = tsToDouble(&elapsed);
   }
+
+  pthread_exit(NULL);
+}
+
+static double tsToDouble(struct timespec *ts) {
+  return (double)ts->tv_sec + (double)ts->tv_nsec / 1e9;
 }

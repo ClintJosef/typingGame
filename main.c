@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-const int TEXT_OFFSET = 2;
+const int TEXT_OFFSET = 4;
 const struct TextSize DEFAULT_TSZ = {
     2, // paragraphs
     3, // min sentences per paragraph
@@ -27,10 +27,10 @@ int main(int argc, char *argv[]) {
     return 1;
 
   char *text = parseArgs(argc, argv, &DEFAULT_TSZ);
-  pthread_t stopwatch = startStopwatch();
+  startStopwatch();
   startGame(text, TEXT_OFFSET);
 
-  // killThread(stopwatch);
+  killStopWatch();
   if (cleanup() == -1)
     return 1;
 }
@@ -73,12 +73,13 @@ void startGame(char *text, int textOffset) {
   CharState *charStates = malloc(sizeof(CharState) * size);
   for (size_t i = 0; i < size; i++)
     charStates[i] = UNTYPED;
-  size_t correct = 0;
+  // just a tally of the correctly typed and total typed chars
+  struct TypingStats userStats = {0, 0};
 
   int c;
   size_t i = 0;
   bool inRange, nonEmpty, isBackspace, isPrintable, isMatching;
-  while (correct < size) {
+  while (userStats.correct < size) {
     c = getchar();
 
     // all these flags
@@ -93,13 +94,16 @@ void startGame(char *text, int textOffset) {
       // handle deleting newlines first
       while (nonEmpty && text[i - 1] == '\n') {
         i--;
-        correct--;
+        userStats.correct--;
+        userStats.typed--;
       }
 
       // normal deletion
       i--;
-      if (charStates[i] == CORRECT)
-        correct--;
+      if (charStates[i] == CORRECT) {
+        userStats.correct--;
+        userStats.typed--;
+      }
     }
 
     // can be printed
@@ -107,16 +111,17 @@ void startGame(char *text, int textOffset) {
       // match chars
       if (isMatching) {
         charStates[i] = CORRECT;
-        correct++;
+        userStats.correct++;
       } else
         charStates[i] = INCORRECT;
       input[i] = c;
       i++;
+      userStats.typed++;
     }
 
     // handle adding newlines
     while (text[i] == '\n') {
-      correct++;
+      userStats.correct++;
       input[i] = '\n';
       i++;
     }
@@ -126,6 +131,7 @@ void startGame(char *text, int textOffset) {
 
     // printing the text to the screen
     moveCursor(textOffset, 0);
+    updateStats(&userStats);
     displayText(text, true, true);
     displayInput(i, input, text, charStates);
   }
