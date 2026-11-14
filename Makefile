@@ -25,9 +25,6 @@ result = $(outputDir)/typingGame
 # In case i have files literally called "all" and "clean"
 .PHONY: all clean
 
-# In case make complains about missing dependencies on the first build
--include $(dependencies)
-
 # Default target
 all: $(result)
 
@@ -50,6 +47,9 @@ $(result): $(objects) | $(outputDir)
 $(outputDir):
 	@mkdir -p $@
 	@echo "Created output directory"
+
+# In case make complains about missing dependencies on the first build
+-include $(dependencies)
 
 # Cleanup (run with 'make clean')
 clean:
