@@ -6,20 +6,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-const char RESET[] = "\033[0m";
-const char BOLD[] = "\033[1m";
-const char FAINT[] = "\033[2m";
-const char UNDERLINE[] = "\033[4m";
-const char BLINKING[] = "\033[5m";
-const char HIDDEN[] = "\033[?25l";
-const char SHOWN[] = "\033[?25h";
-const char CUR_HOME[] = "\033[H";
-const char SAVE_CUR[] = "\033[s";
-const char RESTORE_CUR[] = "\033[u";
-const char ERASE_LINE[] = "\033[2K";
-const char SAVE_SCREEN[] = "\033[?47h";
-const char RESTORE_SCREEN[] = "\033[?47l";
-const char ERASE_SCREEN[] = "\033[2J";
+const char *RESET = "\033[0m";
+const char *BOLD = "\033[1m";
+const char *FAINT = "\033[2m";
+const char *UNDERLINE = "\033[4m";
+const char *HIDDEN = "\033[?25l";
+const char *SHOWN = "\033[?25h";
+const char *CUR_HOME = "\033[H";
+const char *SAVE_CUR = "\033[s";
+const char *RESTORE_CUR = "\033[u";
+const char *ERASE_LINE = "\033[2K";
+const char *SAVE_SCREEN = "\033[?47h";
+const char *RESTORE_SCREEN = "\033[?47l";
+const char *ERASE_SCREEN = "\033[2J";
 
 const struct Colors COLORS = {"\033[2m", "\033[31m", "\033[38;5;76m"};
 
@@ -45,7 +44,7 @@ void showCursor(void) { ansiPrint(1, SHOWN); }
 void eraseScreen(void) { ansiPrint(1, ERASE_SCREEN); }
 void resetModes(void) { ansiPrint(1, RESET); }
 
-const char *getCharColor(CharState charState) {
+char *getCharColor(CharState charState) {
   char *color;
   switch (charState) {
   case INCORRECT:
