@@ -9,7 +9,8 @@ objects = $(sources:.c=.o)
 # same thing but for dependency files
 dependencies = $(objects:.o=.d)
 # Compiled game location
-result = output/typingGame
+outputDir = output
+result = $(outputDir)/typingGame
 
 # In case i have files literally called "all" and "clean"
 .PHONY: all clean
@@ -18,25 +19,29 @@ result = output/typingGame
 all: $(result)
 
 # result requires all object files
+# "@" before a command just makes sure the command itself isnt outputted as a string
 $(result): $(objects) | output
-	# Link object files and compile into $(result)
-	$(CC) $(CFLAGS) $(objects) -o $(result)
+	@echo "Compiling with flags $(CFLAGS)"
+	@$(CC) $(CFLAGS) $(objects) -o $(result)
+	@echo "Linked object files and compiled into $(result)"
 
 # Compile source files into the required object files
 # $@ is the target (.o), $< is its first prerequisite (.c)
 %.o: %.c
-	# Compile $<
-	$(CC) -c $(CFLAGS) $< -o $@
+	@$(CC) -c $(CFLAGS) $< -o $@
+	@echo "Compiled $<"
 
 # Create output dir if it doesnt exist
 output:
-	# Create output directory
-	mkdir -p output
+	@mkdir -p output
+	@echo "Created output directory"
 
 clean:
-	# Delete all object files
-	rm -rf $(objects)
-	# Delete all dependency files
-	rm -rf $(dependencies)
-	# Delete output
-	rm -rf $(result)
+	@rm -rf $(objects)
+	@echo "Deleted all object files"
+
+	@rm -rf $(dependencies)
+	@echo "Deleted all dependency files"
+
+	@rm -rf $(outputDir)
+	@echo "Deleted output dir"
