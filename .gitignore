@@ -1,7 +1,8 @@
 .ccls-cache/
 **/**.DS_STORE
+**/**.o
+**/**.d
 output/
 shlorem/
 compile_commands.json
 test.c
-.gitignore
