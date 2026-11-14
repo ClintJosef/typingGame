@@ -21,7 +21,7 @@ all: $(result)
 # result requires all object files
 # "@" before a command just makes sure the command itself isnt outputted as a string
 $(result): $(objects) | output
-	@echo "Compiling with flags $(CFLAGS)"
+	@echo "Compiling using '$(CC) $(CFLAGS)'"
 	@$(CC) $(CFLAGS) $(objects) -o $(result)
 	@echo "Linked object files and compiled into $(result)"
 
