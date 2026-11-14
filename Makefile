@@ -1,6 +1,16 @@
 CC = cc
-# last 2 flags make sure to recompile the source if its header was modified
+# Compiler flags
+# -Wall just enables most warnings
+# MMD and MP make sure to recompile the source if its header was modified
 CFLAGS = -Wall -MMD -MP
+# Preprocessor (think #include, #define, macros) flags
+# Could use for debugging/testing
+CPPFLAGS =
+# Linker flags (ex. -L/path-to-ext-lib)
+LDFLAGS =
+# Libraries to link with (ex. -lpthread to link pthread lib)
+# For libraries not already included in the standard lib
+LDLIBS =
 
 # Wildcard expansion
 sources = main.c $(wildcard lib/*.c)
@@ -15,33 +25,33 @@ result = $(outputDir)/typingGame
 # In case i have files literally called "all" and "clean"
 .PHONY: all clean
 
+# In case make complains about missing dependencies on the first build
+-include $(dependencies)
+
 # Default target
 all: $(result)
 
-# result requires all object files
+# result requires all object files (and the output dir)
+# if present, link them all into one final executable
 # "@" before a command just makes sure the command itself isnt outputted as a string
-$(result): $(objects) | output
-	@echo "Compiling using '$(CC) $(CFLAGS)'"
-	@$(CC) $(CFLAGS) $(objects) -o $(result)
-	@echo "Linked object files and compiled into $(result)"
+$(result): $(objects) | $(outputDir)
+	@echo "Linking with '$(CC) $(LDFLAGS) $(LDLIBS)'"
+	@$(CC) $(LDFLAGS) $(objects) $(LDLIBS) -o $@
+	@echo "Linked object files and compiled into $@"
 
 # Compile source files into the required object files
+# Only source files modified since the last make (if not cleaned) are recompiled
 # $@ is the target (.o), $< is its first prerequisite (.c)
 %.o: %.c
-	@$(CC) -c $(CFLAGS) $< -o $@
+	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 	@echo "Compiled $<"
 
 # Create output dir if it doesnt exist
-output:
-	@mkdir -p output
+$(outputDir):
+	@mkdir -p $@
 	@echo "Created output directory"
 
+# Cleanup (run with 'make clean')
 clean:
-	@rm -rf $(objects)
-	@echo "Deleted all object files"
-
-	@rm -rf $(dependencies)
-	@echo "Deleted all dependency files"
-
-	@rm -rf $(outputDir)
-	@echo "Deleted output dir"
+	@rm -rf $(objects) $(dependencies) $(outputDir)
+	@echo "Deleted build files"
