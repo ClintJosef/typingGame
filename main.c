@@ -10,8 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-void usage(void);
 char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz);
+int parseIntOrExit(char *str);
+void usage(bool invalid);
 void startGame(char *text, int textOffset);
 
 int main(int argc, char *argv[]) {
@@ -26,27 +27,16 @@ int main(int argc, char *argv[]) {
       .maxWordSntn = 6,
   };
 
-  init();
-  srand(time(NULL));
-
-  char *text = parseArgs(argc, argv, &defaultTsz);
   setCheatThreshold(cheatThreshold);
+  srand(time(NULL));
+  char *text = parseArgs(argc, argv, &defaultTsz);
+  init();
+
   startStopwatch(swSleepMs);
   startGame(text, textOffset);
 
   killStopWatch();
   cleanup();
-}
-
-void usage(void) {
-  char *msg =
-      "Invalid args.\nUsage: typingGame [--paragraphs --minSntn --maxSntn "
-      "--minWords "
-      "--maxWords]\nDefaults: --paragraphs=2 --minSntn=3 --maxSntn=5 "
-      "--minWord=4 --maxWord=6";
-  printf("%s", msg);
-  fflush(stdout);
-  kill(0, SIGTERM);
 }
 
 // parse every arg into one string, separated by spaces
@@ -59,43 +49,85 @@ char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz) {
   // copy of the default
   struct TextSize tsz = *defaultTsz;
 
-  // all the options (name, has_args, flags, val)
-  // last element has to be all 0s for some reason
+  // all the options
+  // the number is just its "id" returned by getopt_long_only etc.
+  // last option has to be all 0s for some reason
   struct option longOpts[] = {
-      {"paragraphs", optional_argument, NULL, 1},
-      {"minSntn", optional_argument, NULL, 2},
-      {"maxSntn", optional_argument, NULL, 3},
-      {"minWords", optional_argument, NULL, 4},
-      {"maxWords", optional_argument, NULL, 5},
+      {"pg", optional_argument, NULL, 1},
+      {"smin", optional_argument, NULL, 2},
+      {"smax", optional_argument, NULL, 3},
+      {"wmin", optional_argument, NULL, 4},
+      {"wmax", optional_argument, NULL, 5},
+      {"help", no_argument, NULL, 'h'},
+      {"h", no_argument, NULL, 'h'},
       {0, 0, 0, 0},
   };
 
   int opt;
-  int optIndex = 0;
-  // idk what to abbreviate the above opts to so just require their full names
-  while ((opt = getopt_long_only(argc, argv, "", longOpts, &optIndex)) != -1) {
+  // loop through every option given
+  while ((opt = getopt_long_only(argc, argv, "", longOpts, NULL)) != -1) {
     switch (opt) {
     case 1:
-      tsz.paragraphs = atoi(optarg);
+      tsz.paragraphs = parseIntOrExit(optarg);
       break;
     case 2:
-      tsz.minSntn = atoi(optarg);
+      tsz.minSntn = parseIntOrExit(optarg);
       break;
     case 3:
-      tsz.maxSntn = atoi(optarg);
+      tsz.maxSntn = parseIntOrExit(optarg);
       break;
     case 4:
-      tsz.minWordSntn = atoi(optarg);
+      tsz.minWordSntn = parseIntOrExit(optarg);
       break;
     case 5:
-      tsz.maxWordSntn = atoi(optarg);
+      tsz.maxWordSntn = parseIntOrExit(optarg);
       break;
+    case 'h':
+      usage(false);
+      break;
+    case '?':
     default:
-      usage();
+      usage(true);
     }
   }
 
   return generateText(&tsz);
+}
+
+// exit program if user passed in invalid numbers as arguments
+int parseIntOrExit(char *str) {
+  // points to the next invalid character in the str
+  // if none, points to the end of the string ('\0')
+  // if it couldnt convert anything, this just ends up as the original string
+  char *endPtr;
+
+  // actually returns a long but theyre both 32 bit on my system so ig its fine
+  int num = strtol(str, &endPtr, 10);
+
+  if (endPtr == str || *endPtr != '\0')
+    usage(true);
+
+  return num;
+}
+
+// help message
+void usage(bool invalid) {
+  static const char MSG[] =
+      "Usage: typingGame [-pg -smin -smax -wmin -wmax -h -help]\n\n"
+      "Options:\n"
+      "    -pg \t:no. of paragraphs\t\t\t(default: 2)\n"
+      "    -smin \t:minimum no. of sentences per paragraph\t(default: 3)\n"
+      "    -smax \t:maximum no. of sentences per paragraph\t(default: 5)\n"
+      "    -wmin \t:minimum no. of words per sentence\t(default: 4)\n"
+      "    -wmax \t:maximum no. of words per sentence\t(default: 6)\n"
+      "    -h/-help \t:prints this help message\n\n"
+      "Each arg must be passed either as '-arg=value' or '--arg=value'";
+
+  if (invalid)
+    fprintf(stderr, "Invalid args.\n\n");
+  fprintf(stderr, "%s", MSG);
+
+  exit(1);
 }
 
 // main loop

@@ -18,8 +18,8 @@ const char *CUR_HOME = "\033[H";
 const char *SAVE_CUR = "\033[s";
 const char *RESTORE_CUR = "\033[u";
 const char *ERASE_LINE = "\033[2K";
-const char *SAVE_SCREEN = "\033[?47h";
-const char *RESTORE_SCREEN = "\033[?47l";
+const char *SAVE_SCREEN = "\033[?1049h";
+const char *RESTORE_SCREEN = "\033[?1049l";
 const char *ERASE_SCREEN = "\033[2J";
 
 const struct Colors COLORS = {
@@ -36,18 +36,30 @@ void ansiPrint(int modes, ...) {
   va_list args;
   va_start(args, modes);
 
-  for (int i = 0; i < modes; i++)
-    printf("%s", va_arg(args, char *));
+  for (int i = 0; i < modes; i++) {
+    char *mode = va_arg(args, char *);
+    printf("%s", mode);
+  }
 
   va_end(args);
 }
 
 void moveCursor(int row, int col) { printf("\033[%d;%df", row, col); }
 void moveToCol(int col) { printf("\033[%dG", col); }
-void hideCursor(void) { ansiPrint(1, HIDDEN); }
-void showCursor(void) { ansiPrint(1, SHOWN); }
-void eraseScreen(void) { ansiPrint(1, ERASE_SCREEN); }
 void resetModes(void) { ansiPrint(1, RESET); }
+
+// these can just write to stdout directly, regardless of cursor position
+void eraseScreen(void) {
+  write(STDOUT_FILENO, ERASE_SCREEN, strlen(ERASE_SCREEN));
+}
+void saveScreen(void) {
+  write(STDOUT_FILENO, SAVE_SCREEN, strlen(SAVE_SCREEN));
+}
+void restoreScreen(void) {
+  write(STDOUT_FILENO, RESTORE_SCREEN, strlen(RESTORE_SCREEN));
+}
+void hideCursor(void) { write(STDOUT_FILENO, HIDDEN, strlen(HIDDEN)); }
+void showCursor(void) { write(STDOUT_FILENO, SHOWN, strlen(SHOWN)); }
 
 void setCheatThreshold(int threshold) { cheatThreshold = threshold; }
 void handleCheat(void) {
