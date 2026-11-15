@@ -24,7 +24,7 @@ dependencies = $(objects:.o=.d)
 outputDir = output
 result = $(outputDir)/typingGame
 
-# header files for words/lower- and upper.txt
+# Header files for words/lower- and upper.txt
 wordDir = words
 wordHeaders = $(patsubst $(wordDir)/%.txt, $(outputDir)/%.h, $(wildcard $(wordDir)/*.txt))
 
@@ -34,8 +34,8 @@ wordHeaders = $(patsubst $(wordDir)/%.txt, $(outputDir)/%.h, $(wildcard $(wordDi
 # Default target
 all: $(result)
 
-# result requires all object files (and the output dir)
-# if present, link them all into one final executable
+# Result requires all object files (and the output dir)
+# If present, link them all into one final executable
 # "@" before a command just makes sure the command itself isnt outputted as a string
 $(result): $(objects)
 	@echo "Linking with '$(CC) $(LDFLAGS) $(LDLIBS)'"
