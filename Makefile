@@ -1,4 +1,4 @@
-CC = cc
+CC = bear -- cc
 # Compiler flags
 # -Wall just enables most warnings
 # MMD and MP make sure to recompile the source if its header was modified
