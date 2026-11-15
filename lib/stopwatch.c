@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 // update frequency of stopwatch thread
-static const long long SLEEP_INTERVAL_MS = 250;
+static const long long SLEEP_INTERVAL_MS = 500;
 
 // timespec just stores a number of seconds (time_t) and nanoseconds (unsigned
 // long long?)
@@ -77,11 +77,11 @@ static void *stopwatchThread(void *arg) {
     elapsedTs(&elapsed);
     elapsedTime = tsToDouble(&elapsed);
 
-    // set cursor position and terminal mode
+    // first lines should be the stats
     moveCursor(1, 1);
-    ansiPrint(1, HIDDEN);
+    hideCursor();
 
-    printf("%s\rTime taken: %.2lfs\n", ERASE_LINE, elapsedTime);
+    printf("%sTime taken: %.1lfs\n", ERASE_LINE, elapsedTime);
     displayTypingStats(&currStats, elapsedTime);
     fflush(stdout);
 

@@ -69,9 +69,9 @@ void displayText(char *text, bool faint, bool restore) {
 }
 
 // colorizes each character based their status
-void displayInput(size_t pos, size_t size, char input[size], char text[size],
+void displayInput(int pos, int size, char input[size], char text[size],
                   CharState charStates[size]) {
-  for (size_t i = 0; i < size; i++) {
+  for (int i = 0; i < size; i++) {
     bool atCursor = i == pos;
     bool untyped = charStates[i] == UNTYPED;
     bool covered = isblank(input[i]) && !isblank(text[i]);
@@ -117,6 +117,6 @@ void displayTypingStats(struct TypingStats *tpStats, double elapsedTime) {
   prevTime = elapsedTime;
   prevTyped = typed;
 
-  printf("\rWpm: %.1lf | Avg Wpm: %.1lf | Accuracy: %.1lf | Progress: %.1lf",
-         wpm, avgWpm, accuracy, progress);
+  printf("%sWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf, Progress: %.0lf",
+         ERASE_LINE, wpm, avgWpm, accuracy, progress);
 }

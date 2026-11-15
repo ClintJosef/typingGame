@@ -129,9 +129,10 @@ void startGame(char *text, int textOffset) {
     input[i] = '\0';
 
     // printing the text to the screen
-    moveCursor(textOffset, 0);
+    moveCursor(textOffset, 1);
     updateStats(&userStats);
     displayInput(i, size, input, text, charStates);
+    fflush(stdout);
   }
 
   // cleanup
