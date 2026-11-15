@@ -83,11 +83,8 @@ char *getCharColor(CharState charState) {
   return color;
 }
 
-void displayText(char *text, bool faint, bool restore) {
-  const char *mod = faint ? FAINT : "";
-  const char *res = restore ? RESTORE_CUR : "";
-
-  ansiPrint(5, SAVE_CUR, mod, text, RESET, res);
+void displayText(char *text) {
+  ansiPrint(5, SAVE_CUR, FAINT, text, RESET, RESTORE_CUR);
 }
 
 // colorizes each character based their status
@@ -120,8 +117,8 @@ void displayTypingStats(struct TypingStats *tpStats, double elapsedTime) {
   static double prevTime = 0;
   static double prevTyped = 0;
 
-  size_t correct = tpStats->correct;
-  size_t typed = tpStats->typed;
+  int correct = tpStats->correct;
+  int typed = tpStats->typed;
   int len = tpStats->len;
 
   // for delta wpm
@@ -129,7 +126,7 @@ void displayTypingStats(struct TypingStats *tpStats, double elapsedTime) {
   double dTyped = typed - prevTyped;
 
   // arbitrary 5-letter words per minute
-  double wpm = dTyped / 5 / dt * 60;
+  double wpm = (double)dTyped / 5 / dt * 60;
   double avgWpm = (double)typed / 5 / elapsedTime * 60;
 
   double accuracy = (double)correct / typed * 100;

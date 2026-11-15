@@ -47,7 +47,7 @@ void resetModes(void);
 void setCheatThreshold(int threshold);
 void handleCheat(void);
 char *getCharColor(CharState charState);
-void displayText(char *text, bool faint, bool restore);
+void displayText(char *text);
 void displayInput(int pos, int size, char input[size], char text[size],
                   CharState charStates[size]);
 void displayTypingStats(struct TypingStats *tpStats, double elapsedTime);

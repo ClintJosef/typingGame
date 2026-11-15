@@ -16,6 +16,7 @@ adjust {3,10} for the length range of the words
 */
 
 char *generateText(struct TextSize *tsz) {
+  // .h files generated in output/
   char *lower = (char *)words_lower_txt;
   char *upper = (char *)words_upper_txt;
 
@@ -68,8 +69,8 @@ char *randomWord(char *words, struct WordsInfo *wi) {
   size_t offset = wi->lineOffsets[line];
   size_t wordSize = wi->lineLengths[line];
 
+  // im assuming the word pulled doesnt include the null byte?
   char *word = calloc(wordSize + 1, sizeof(char));
-
   memcpy(word, &words[offset], wordSize);
 
   return word;
@@ -77,27 +78,29 @@ char *randomWord(char *words, struct WordsInfo *wi) {
 
 // count the number of lines and their byte offset in a char array
 void getWordsInfo(char *words, struct WordsInfo *wi) {
+  size_t capac = 16;
   size_t line = 0;
-  size_t *offsets = calloc(1, sizeof(size_t));
-  size_t *lineLengths = calloc(1, sizeof(size_t));
+  size_t *offsets = calloc(capac, sizeof(size_t));
+  size_t *lineLengths = calloc(capac, sizeof(size_t));
 
   // split words into "tokens" separated by newline, then iterate
   // through each token
   char *wordPtr = strtok(words, "\n");
   while (wordPtr != NULL) { // NULL when there arent any tokens left
     // increase array sizes
-    offsets = realloc(offsets, (line + 1) * sizeof(size_t));
-    lineLengths = realloc(lineLengths, (line + 1) * sizeof(size_t));
+    if (line == capac) {
+      capac *= 2;
+      offsets = realloc(offsets, capac * sizeof(size_t));
+      lineLengths = realloc(lineLengths, capac * sizeof(size_t));
+    }
 
     // woah, pointer arithmetic
     // wordPtr is just words advanced by the offset
     // so we get the offset by subtracting words again
     offsets[line] = wordPtr - words;
+    lineLengths[line] = strlen(wordPtr);
 
-    size_t wordSize = strlen(wordPtr);
-    lineLengths[line] = wordSize;
-
-    // go to next token
+    // advance to next token (line)
     wordPtr = strtok(NULL, "\n");
     line++;
   }

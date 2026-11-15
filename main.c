@@ -3,67 +3,106 @@
 #include "lib/textGen.h"
 #include "lib/typingUtils.h"
 #include <ctype.h>
+#include <getopt.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
-const int TEXT_OFFSET = 4;
-const long long SW_SLEEP_MS = 500;
-const int CHEAT_THRESHOLD = 2e3;
-const struct TextSize DEFAULT_TSZ = {
-    .paragraphs = 2,
-    .minSntn = 3,
-    .maxSntn = 5,
-    .minWordSntn = 4,
-    .maxWordSntn = 6,
-};
-
-char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz);
+void usage(void);
+char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz);
 void startGame(char *text, int textOffset);
 
 int main(int argc, char *argv[]) {
+  int textOffset = 4;
+  long long swSleepMs = 500;
+  int cheatThreshold = 1000;
+  struct TextSize defaultTsz = {
+      .paragraphs = 2,
+      .minSntn = 3,
+      .maxSntn = 5,
+      .minWordSntn = 4,
+      .maxWordSntn = 6,
+  };
+
   init();
   srand(time(NULL));
 
-  char *text = parseArgs(argc, argv, &DEFAULT_TSZ);
-  setCheatThreshold(CHEAT_THRESHOLD);
-  startStopwatch(SW_SLEEP_MS);
-  startGame(text, TEXT_OFFSET);
+  char *text = parseArgs(argc, argv, &defaultTsz);
+  setCheatThreshold(cheatThreshold);
+  startStopwatch(swSleepMs);
+  startGame(text, textOffset);
 
   killStopWatch();
   cleanup();
 }
 
+void usage(void) {
+  char *msg =
+      "Invalid args.\nUsage: typingGame [--paragraphs --minSntn --maxSntn "
+      "--minWords "
+      "--maxWords]\nDefaults: --paragraphs=2 --minSntn=3 --maxSntn=5 "
+      "--minWord=4 --maxWord=6";
+  printf("%s", msg);
+  fflush(stdout);
+  kill(0, SIGTERM);
+}
+
 // parse every arg into one string, separated by spaces
-char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
+char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz) {
   // fall back to default text if no args are given
   if (argc < 2)
     // have to do this to avoid "disqualifying" const
     return generateText((struct TextSize *)defaultTsz);
 
-  // initial size
-  size_t size = 1; // +1 for null byte
-  for (int i = 1; i < argc; i++)
-    size += strlen(argv[i]) + 1; // +1 for space
-  char *text = calloc(size + 1, sizeof(char));
+  // copy of the default
+  struct TextSize tsz = *defaultTsz;
 
-  // concatenate
-  for (int i = 1; i < argc; i++) {
-    if (i > 1)
-      strcat(text, " ");
-    strcat(text, argv[i]);
+  // all the options (name, has_args, flags, val)
+  // last element has to be all 0s for some reason
+  struct option longOpts[] = {
+      {"paragraphs", optional_argument, NULL, 1},
+      {"minSntn", optional_argument, NULL, 2},
+      {"maxSntn", optional_argument, NULL, 3},
+      {"minWords", optional_argument, NULL, 4},
+      {"maxWords", optional_argument, NULL, 5},
+      {0, 0, 0, 0},
+  };
+
+  int opt;
+  int optIndex = 0;
+  // idk what to abbreviate the above opts to so just require their full names
+  while ((opt = getopt_long_only(argc, argv, "", longOpts, &optIndex)) != -1) {
+    switch (opt) {
+    case 1:
+      tsz.paragraphs = atoi(optarg);
+      break;
+    case 2:
+      tsz.minSntn = atoi(optarg);
+      break;
+    case 3:
+      tsz.maxSntn = atoi(optarg);
+      break;
+    case 4:
+      tsz.minWordSntn = atoi(optarg);
+      break;
+    case 5:
+      tsz.maxWordSntn = atoi(optarg);
+      break;
+    default:
+      usage();
+    }
   }
 
-  return text;
+  return generateText(&tsz);
 }
 
 // main loop
 void startGame(char *text, int textOffset) {
   // display text under the stopwatch and stuff
   moveCursor(textOffset, 0);
-  displayText(text, true, true);
+  displayText(text);
 
   int size = strlen(text);
   // user input
