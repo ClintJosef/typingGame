@@ -34,6 +34,8 @@ extern const char *SAVE_SCREEN;
 extern const char *RESTORE_SCREEN;
 extern const char *ERASE_SCREEN;
 
+extern int cheatThreshold;
+
 void ansiPrint(int modes, ...);
 void moveCursor(int row, int col);
 void moveToCol(int col);
@@ -41,6 +43,8 @@ void hideCursor(void);
 void showCursor(void);
 void eraseScreen(void);
 void resetModes(void);
+void setCheatThreshold(int threshold);
+void handleCheat(void);
 char *getCharColor(CharState charState);
 void displayText(char *text, bool faint, bool restore);
 void displayInput(int pos, int size, char input[size], char text[size],

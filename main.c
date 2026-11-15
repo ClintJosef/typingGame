@@ -7,8 +7,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 const int TEXT_OFFSET = 4;
+const long long SW_SLEEP_MS = 500;
+const int CHEATER_THRESHOLD = 2e3;
+const bool CHEATER_EXIT = true;
 const struct TextSize DEFAULT_TSZ = {
     .paragraphs = 2,
     .minSntn = 3,
@@ -25,7 +29,8 @@ int main(int argc, char *argv[]) {
   srand(time(NULL));
 
   char *text = parseArgs(argc, argv, &DEFAULT_TSZ);
-  startStopwatch();
+  setCheatThreshold(CHEATER_THRESHOLD);
+  startStopwatch(SW_SLEEP_MS);
   startGame(text, TEXT_OFFSET);
 
   killStopWatch();
@@ -79,9 +84,12 @@ void startGame(char *text, int textOffset) {
 
   int c;
   int i = 0;
-  bool isBackspace, isPrintable, isMatching, pasted;
+  bool isBackspace, isPrintable, isMatching;
   while (userStats.correct < size) {
     c = getchar();
+
+    if (c == EOF)
+      break;
 
     isBackspace = c == 127 || c == 8;
     isPrintable = isprint((unsigned char)c);
@@ -119,8 +127,9 @@ void startGame(char *text, int textOffset) {
     }
 
     // handle adding newlines
-    while (text[i] == '\n' && i < size) {
+    while (i < size && text[i] == '\n') {
       userStats.correct++;
+      userStats.typed++;
       input[i] = '\n';
       i++;
     }
@@ -140,6 +149,8 @@ void startGame(char *text, int textOffset) {
     // now allow other threads (stopwatch) to write to it
     funlockfile(stdout);
   }
+
+  sleep(1);
 
   // cleanup
   free(input);

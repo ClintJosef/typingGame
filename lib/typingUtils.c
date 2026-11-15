@@ -1,10 +1,12 @@
 #include "typingUtils.h"
 #include <ctype.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 const char *RESET = "\033[0m";
 const char *BOLD = "\033[1m";
@@ -22,6 +24,9 @@ const char *ERASE_SCREEN = "\033[2J";
 
 const struct Colors COLORS = {
     .untyped = "\033[2m", .incorrect = "\033[31m", .correct = "\033[38;5;76m"};
+
+// max wpm limit before it thinks user is cheating (can be set)
+int cheatThreshold = INT32_MAX;
 
 // woah, variadic function
 // first arg has to be how many args were passed (minus one)
@@ -43,6 +48,23 @@ void hideCursor(void) { ansiPrint(1, HIDDEN); }
 void showCursor(void) { ansiPrint(1, SHOWN); }
 void eraseScreen(void) { ansiPrint(1, ERASE_SCREEN); }
 void resetModes(void) { ansiPrint(1, RESET); }
+
+void setCheatThreshold(int threshold) { cheatThreshold = threshold; }
+void handleCheat(void) {
+  // clear screen
+  ansiPrint(1, ERASE_SCREEN);
+  moveCursor(1, 1);
+
+  // the line
+  printf("You dirty cheater.");
+  fflush(stdout);
+  sleep(2);
+
+  // clear again and signal to restore term
+  ansiPrint(1, ERASE_SCREEN);
+  moveCursor(1, 1);
+  killpg(0, SIGTERM);
+}
 
 char *getCharColor(CharState charState) {
   char *color;
@@ -116,6 +138,12 @@ void displayTypingStats(struct TypingStats *tpStats, double elapsedTime) {
   // values are saved for the next function call
   prevTime = elapsedTime;
   prevTyped = typed;
+
+  // exit if user is "typing" too fast
+  if (wpm >= cheatThreshold) {
+    handleCheat();
+    return;
+  }
 
   printf("%sWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf, Progress: %.0lf",
          ERASE_LINE, wpm, avgWpm, accuracy, progress);
