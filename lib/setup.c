@@ -46,11 +46,11 @@ void init(void) {
 void cleanup(void) {
   int n = restoreTermState();
 
-  // un-hide cursor
-  // safe way to still output text in a signal handle
+  // clear terminal and un-hide cursor safely in a signal handle
+  tcflush(STDOUT_FILENO, TCOFLUSH);
   write(STDOUT_FILENO, SHOWN, strlen(SHOWN));
 
-  // also signal-safe
+  // also async-signal-safe (but not just "exit"?)
   _exit(n != -1 ? EXIT_SUCCESS : EXIT_FAILURE);
 }
 
