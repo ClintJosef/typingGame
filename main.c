@@ -79,7 +79,7 @@ void startGame(char *text, int textOffset) {
 
   int c;
   int i = 0;
-  bool isBackspace, isPrintable, isMatching;
+  bool isBackspace, isPrintable, isMatching, pasted;
   while (userStats.correct < size) {
     c = getchar();
 
@@ -128,11 +128,17 @@ void startGame(char *text, int textOffset) {
     // always gotta have the null byte
     input[i] = '\0';
 
+    // make sure stdout is safe to write to for this (main) thread
+    flockfile(stdout);
+
     // printing the text to the screen
     moveCursor(textOffset, 1);
     updateStats(&userStats);
     displayInput(i, size, input, text, charStates);
     fflush(stdout);
+
+    // now allow other threads (stopwatch) to write to it
+    funlockfile(stdout);
   }
 
   // cleanup

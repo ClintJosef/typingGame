@@ -77,6 +77,9 @@ static void *stopwatchThread(void *arg) {
     elapsedTs(&elapsed);
     elapsedTime = tsToDouble(&elapsed);
 
+    // make sure stdout is safe to write to for this (stopwatch) thread
+    flockfile(stdout);
+
     // first lines should be the stats
     moveCursor(1, 1);
     hideCursor();
@@ -84,6 +87,9 @@ static void *stopwatchThread(void *arg) {
     printf("%sTime taken: %.1lfs\n", ERASE_LINE, elapsedTime);
     displayTypingStats(&currStats, elapsedTime);
     fflush(stdout);
+
+    // now allow other threads (main) to write to it
+    funlockfile(stdout);
 
     // lap every SLEEP_INTERVAL_MS ms
     nanosleep(&sleepInterval, NULL);
