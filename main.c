@@ -10,11 +10,11 @@
 
 const int TEXT_OFFSET = 4;
 const struct TextSize DEFAULT_TSZ = {
-    2, // paragraphs
-    3, // min sentences per paragraph
-    5, // max ''
-    4, // min words per sentence
-    6  // max ''
+    .paragraphs = 2,
+    .minSntn = 3,
+    .maxSntn = 5,
+    .minWordSntn = 4,
+    .maxWordSntn = 6,
 };
 
 char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz);
@@ -57,7 +57,7 @@ char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
 
 // main loop
 void startGame(char *text, int textOffset) {
-  // move to row 2 since the stopwatch is in row 1
+  // display text under the stopwatch and stuff
   moveCursor(textOffset, 0);
   displayText(text, true, true);
 
@@ -70,29 +70,28 @@ void startGame(char *text, int textOffset) {
   CharState *charStates = malloc(sizeof(CharState) * size);
   for (size_t i = 0; i < size; i++)
     charStates[i] = UNTYPED;
-  // just a tally of the correctly typed and total typed chars
-  struct TypingStats userStats = {0, 0};
+
+  // just a tally
+  struct TypingStats userStats = {.typed = 0, .correct = 0};
 
   int c;
   size_t i = 0;
-  bool inRange, nonEmpty, isBackspace, isPrintable, isMatching;
+  bool isBackspace, isPrintable, isMatching;
   while (userStats.correct < size) {
     c = getchar();
 
-    // all these flags
-    inRange = i < size;
-    nonEmpty = i > 0;
     isBackspace = c == 127 || c == 8;
     isPrintable = isprint((unsigned char)c);
-    isMatching = inRange && c == text[i];
+    isMatching = i < size && c == text[i];
 
     // backspace
-    if (isBackspace && nonEmpty) {
+    if (isBackspace && i > 0) {
       // handle deleting newlines first
-      while (nonEmpty && text[i - 1] == '\n') {
+      while (i > 0 && text[i - 1] == '\n') {
         i--;
         userStats.correct--;
         userStats.typed--;
+        charStates[i] = UNTYPED;
       }
 
       // normal deletion
@@ -100,10 +99,11 @@ void startGame(char *text, int textOffset) {
       userStats.typed--;
       if (charStates[i] == CORRECT)
         userStats.correct--;
+      charStates[i] = UNTYPED;
     }
 
     // can be printed
-    else if (isPrintable && inRange) {
+    else if (isPrintable && i < size) {
       // match chars
       if (isMatching) {
         charStates[i] = CORRECT;
@@ -116,7 +116,7 @@ void startGame(char *text, int textOffset) {
     }
 
     // handle adding newlines
-    while (text[i] == '\n') {
+    while (text[i] == '\n' && i < size) {
       userStats.correct++;
       input[i] = '\n';
       i++;
@@ -128,8 +128,7 @@ void startGame(char *text, int textOffset) {
     // printing the text to the screen
     moveCursor(textOffset, 0);
     updateStats(&userStats);
-    displayText(text, true, true);
-    displayInput(i, input, text, charStates);
+    displayInput(i, size, input, text, charStates);
   }
 
   // cleanup

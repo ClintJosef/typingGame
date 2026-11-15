@@ -42,7 +42,7 @@ void eraseScreen(void);
 void resetModes(void);
 char *getCharColor(CharState charState);
 void displayText(char *text, bool faint, bool restore);
-void displayInput(size_t size, char input[size], char text[size],
+void displayInput(size_t pos, size_t size, char input[size], char text[size],
                   CharState charStates[size]);
 void displayTypingStats(struct TypingStats *tpStats, double elapsedTime);
 

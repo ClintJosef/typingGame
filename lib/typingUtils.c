@@ -20,7 +20,8 @@ const char *SAVE_SCREEN = "\033[?47h";
 const char *RESTORE_SCREEN = "\033[?47l";
 const char *ERASE_SCREEN = "\033[2J";
 
-const struct Colors COLORS = {"\033[2m", "\033[31m", "\033[38;5;76m"};
+const struct Colors COLORS = {
+    .untyped = "\033[2m", .incorrect = "\033[31m", .correct = "\033[38;5;76m"};
 
 // woah, variadic function
 // first arg has to be how many args were passed (minus one)
@@ -30,9 +31,8 @@ void ansiPrint(int modes, ...) {
   va_list args;
   va_start(args, modes);
 
-  for (int i = 0; i < modes; i++) {
+  for (int i = 0; i < modes; i++)
     printf("%s", va_arg(args, char *));
-  }
 
   va_end(args);
 }
@@ -69,22 +69,28 @@ void displayText(char *text, bool faint, bool restore) {
 }
 
 // colorizes each character based their status
-void displayInput(size_t size, char input[size], char text[size],
+void displayInput(size_t pos, size_t size, char input[size], char text[size],
                   CharState charStates[size]) {
-  size_t i = 0;
-  for (; i < size; i++) {
-    // if a space is over a char, show that char instead (but faint)
-    if (!isblank(text[i]) && isblank(input[i]))
-      printf("%s%c", FAINT, text[i]);
+  for (size_t i = 0; i < size; i++) {
+    bool atCursor = i == pos;
+    bool untyped = charStates[i] == UNTYPED;
+    bool covered = isblank(input[i]) && !isblank(text[i]);
 
-    else
+    // custom cursor
+    if (atCursor)
+      printf("%s%s%c", BOLD, UNDERLINE, text[pos]);
+
+    // colorize user input (green/red)
+    else if (!untyped && !covered)
       printf("%s%c", getCharColor(charStates[i]), input[i]);
+
+    // show faint text if user inputted a space/tab over it
+    // or if its not typed yet
+    else
+      printf("%s%c", FAINT, text[i]);
 
     resetModes();
   }
-
-  // custom cursor basically
-  printf("%s%s%c%s", BOLD, UNDERLINE, text[i], RESET);
 }
 
 void displayTypingStats(struct TypingStats *tpStats, double elapsedTime) {
