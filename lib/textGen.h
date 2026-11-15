@@ -3,9 +3,10 @@
 
 #include <stdio.h>
 
-struct FileInfo {
-  size_t lines;        // num of lines in a file
-  size_t *lineOffsets; // byte offset of each line
+struct WordsInfo {
+  size_t lines;
+  size_t *lineOffsets;
+  size_t *lineLengths;
 };
 
 struct TextSize {
@@ -17,8 +18,8 @@ struct TextSize {
 };
 
 char *generateText(struct TextSize *tsz);
-char *randomWord(FILE *words, struct FileInfo *fi);
-void getFileInfo(FILE *file, struct FileInfo *fi);
+char *randomWord(char *words, struct WordsInfo *wi);
+void getWordsInfo(char *words, struct WordsInfo *wi);
 int randRange(int min, int max);
 size_t appendStr(char **text, size_t size, char *add);
 

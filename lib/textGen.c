@@ -1,4 +1,6 @@
 #include "textGen.h"
+#include "output/lower.h"
+#include "output/upper.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,18 +14,14 @@ bash commands to populate these (assuming $words is the path to ^):
              words/lower.txt
 adjust {3,10} for the length range of the words
 */
-static const char LOWER_WORDS_FP[] =
-    "/Users/hamburger/Dev/C/typing/words/lower.txt";
-static const char UPPER_WORDS_FP[] =
-    "/Users/hamburger/Dev/C/typing/words/upper.txt";
 
 char *generateText(struct TextSize *tsz) {
-  FILE *lower = fopen(LOWER_WORDS_FP, "r");
-  FILE *upper = fopen(UPPER_WORDS_FP, "r");
+  char *lower = (char *)words_lower_txt;
+  char *upper = (char *)words_upper_txt;
 
-  struct FileInfo lowerFi, upperFi;
-  getFileInfo(lower, &lowerFi);
-  getFileInfo(upper, &upperFi);
+  struct WordsInfo lowerFi, upperFi;
+  getWordsInfo(lower, &lowerFi);
+  getWordsInfo(upper, &upperFi);
 
   char *text = calloc(1, sizeof(char));
   size_t textSize = 0;
@@ -60,51 +58,54 @@ char *generateText(struct TextSize *tsz) {
 
   text[textSize] = '\0';
 
-  fclose(lower);
-  fclose(upper);
-
   return text;
 }
 
-// takes a file full of words separated by newline
+// takes a char array of words separated by newline
 // outputs a random word from it
-char *randomWord(FILE *words, struct FileInfo *fi) {
-  // random number between 0 and the last line of the file
-  size_t i = randRange(0, fi->lines);
-  // jump to that line
-  fseek(words, fi->lineOffsets[i], SEEK_SET);
+char *randomWord(char *words, struct WordsInfo *wi) {
+  size_t line = randRange(0, wi->lines - 1);
+  size_t offset = wi->lineOffsets[line];
+  size_t wordSize = wi->lineLengths[line];
 
-  // surely the word wont be longer than this
-  char *word = calloc(64, sizeof(char));
-  fgets(word, 64 * sizeof(char), words);
+  char *word = calloc(wordSize + 1, sizeof(char));
 
-  // delete newline
-  size_t size = strlen(word);
-  word[size - 1] = '\0';
-  word = realloc(word, size);
+  memcpy(word, &words[offset], wordSize);
 
   return word;
 }
 
-// count the number of lines and their byte offset in a file
-void getFileInfo(FILE *file, struct FileInfo *fi) {
+// count the number of lines and their byte offset in a char array
+void getWordsInfo(char *words, struct WordsInfo *wi) {
   size_t line = 0;
   size_t *offsets = calloc(1, sizeof(size_t));
-  // temp buffer that just stores a line
-  char buffer[64];
+  size_t *lineLengths = calloc(1, sizeof(size_t));
 
-  while (!feof(file)) {
-    // get line offset and resize array
-    offsets[line++] = ftell(file);
-    offsets = realloc(offsets, sizeof(size_t) * (line + 1));
+  // split words into "tokens" separated by newline, then iterate
+  // through each token
+  char *wordPtr = strtok(words, "\n");
+  while (wordPtr != NULL) { // NULL when there arent any tokens left
+    // increase array sizes
+    offsets = realloc(offsets, (line + 1) * sizeof(size_t));
+    lineLengths = realloc(lineLengths, (line + 1) * sizeof(size_t));
 
-    // read the line to move the position indicator
-    fgets(buffer, 64, file);
+    // woah, pointer arithmetic
+    // wordPtr is just words advanced by the offset
+    // so we get the offset by subtracting words again
+    offsets[line] = wordPtr - words;
+
+    size_t wordSize = strlen(wordPtr);
+    lineLengths[line] = wordSize;
+
+    // go to next token
+    wordPtr = strtok(NULL, "\n");
+    line++;
   }
 
   // fill the struct
-  fi->lines = line;
-  fi->lineOffsets = offsets;
+  wi->lines = line;
+  wi->lineOffsets = offsets;
+  wi->lineLengths = lineLengths;
 }
 
 // appends {add} to {str}, returning the new size
