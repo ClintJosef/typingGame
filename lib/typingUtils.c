@@ -145,6 +145,6 @@ void displayTypingStats(struct TypingStats *tpStats, double elapsedTime) {
     return;
   }
 
-  printf("%sWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf, Progress: %.0lf",
+  printf("%sWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf%%, Progress: %.0lf%%",
          ERASE_LINE, wpm, avgWpm, accuracy, progress);
 }
