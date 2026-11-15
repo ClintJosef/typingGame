@@ -13,8 +13,9 @@ struct Colors {
 };
 
 struct TypingStats {
-  size_t correct;
-  size_t typed;
+  int correct;
+  int typed;
+  int len;
 };
 
 extern const struct Colors COLORS;

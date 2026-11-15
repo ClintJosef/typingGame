@@ -61,21 +61,24 @@ void startGame(char *text, int textOffset) {
   moveCursor(textOffset, 0);
   displayText(text, true, true);
 
-  size_t size = strlen(text);
+  int size = strlen(text);
+  // user input
   char *input = calloc(size + 1, sizeof(char));
+
+  // gotta use ints instead of size_t for the TypingStats so its atomic and
+  // lock-free, meaning the stopwatch thread can safely access userStats
+  // these strings probably wont be long enough to warrant size_t anyway
+  struct TypingStats userStats = {.typed = 0, .correct = 0, .len = size};
 
   // each individual char can be in one of three states:
   // UNTYPED, CORRECT, INCORRECT
   // used for char-by-char text coloring
   CharState *charStates = malloc(sizeof(CharState) * size);
-  for (size_t i = 0; i < size; i++)
+  for (int i = 0; i < size; i++)
     charStates[i] = UNTYPED;
 
-  // just a tally
-  struct TypingStats userStats = {.typed = 0, .correct = 0};
-
   int c;
-  size_t i = 0;
+  int i = 0;
   bool isBackspace, isPrintable, isMatching;
   while (userStats.correct < size) {
     c = getchar();
