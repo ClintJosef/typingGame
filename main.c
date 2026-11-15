@@ -11,8 +11,7 @@
 
 const int TEXT_OFFSET = 4;
 const long long SW_SLEEP_MS = 500;
-const int CHEATER_THRESHOLD = 2e3;
-const bool CHEATER_EXIT = true;
+const int CHEAT_THRESHOLD = 2e3;
 const struct TextSize DEFAULT_TSZ = {
     .paragraphs = 2,
     .minSntn = 3,
@@ -29,7 +28,7 @@ int main(int argc, char *argv[]) {
   srand(time(NULL));
 
   char *text = parseArgs(argc, argv, &DEFAULT_TSZ);
-  setCheatThreshold(CHEATER_THRESHOLD);
+  setCheatThreshold(CHEAT_THRESHOLD);
   startStopwatch(SW_SLEEP_MS);
   startGame(text, TEXT_OFFSET);
 
