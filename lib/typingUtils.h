@@ -4,7 +4,8 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-typedef enum { UNTYPED, INCORRECT, CORRECT } CharState;
+// UNTYPED = 0 for calloc (just to be safe)
+typedef enum { UNTYPED = 0, INCORRECT, CORRECT } CharState;
 
 struct Colors {
   char *untyped;

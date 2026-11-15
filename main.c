@@ -77,9 +77,7 @@ void startGame(char *text, int textOffset) {
   // each individual char can be in one of three states:
   // UNTYPED, CORRECT, INCORRECT
   // used for char-by-char text coloring
-  CharState *charStates = malloc(sizeof(CharState) * size);
-  for (int i = 0; i < size; i++)
-    charStates[i] = UNTYPED;
+  CharState *charStates = calloc(size, sizeof(CharState));
 
   int c;
   int i = 0;
@@ -149,6 +147,7 @@ void startGame(char *text, int textOffset) {
     funlockfile(stdout);
   }
 
+  printf("\nDone!");
   sleep(1);
 
   // cleanup
