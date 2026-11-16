@@ -13,6 +13,9 @@ struct Colors {
   char *correct;
 };
 
+// 3 size_t's are apparently too big to be 'safely' atomic
+// which is important because eventually the stopwatch and main thread
+// will be sharing one of these
 struct TypingStats {
   int correct;
   int typed;

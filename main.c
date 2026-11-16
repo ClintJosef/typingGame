@@ -11,6 +11,7 @@
 #include <string.h>
 
 char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz);
+char *readStdin(void);
 int parseIntOrExit(char *str);
 void usage(bool invalid);
 void startGame(char *text, int textOffset);
@@ -39,20 +40,24 @@ int main(int argc, char *argv[]) {
   cleanup();
 }
 
-// parse every arg into one string, separated by spaces
+// read stdin first, if its empty then parse the args
 char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz) {
-  // fall back to default text if no args are given
-  if (argc < 2)
-    // have to do this to avoid "disqualifying" const
-    return generateText((struct TextSize *)defaultTsz);
+  if (argc < 2) {
+    if (!isatty(STDIN_FILENO)) {
+      // try to read from stdin
+      char *input = readStdin();
+      if (input != NULL)
+        return input;
+    }
 
-  // copy of the default
-  struct TextSize tsz = *defaultTsz;
+    // no input/couldnt read from stdin -> generate default text
+    return generateText((struct TextSize *)defaultTsz);
+  }
 
   // all the options
   // the number is just its "id" returned by getopt_long_only etc.
   // last option has to be all 0s for some reason
-  struct option longOpts[] = {
+  static struct option longOpts[] = {
       {"pg", optional_argument, NULL, 1},
       {"smin", optional_argument, NULL, 2},
       {"smax", optional_argument, NULL, 3},
@@ -62,6 +67,9 @@ char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz) {
       {"h", no_argument, NULL, 'h'},
       {0, 0, 0, 0},
   };
+
+  // copy of the defaults
+  struct TextSize tsz = *defaultTsz;
 
   int opt;
   // loop through every option given
@@ -94,6 +102,33 @@ char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz) {
   return generateText(&tsz);
 }
 
+char *readStdin(void) {
+  // initial size
+  size_t capac = 1024;
+  size_t len = 0;
+  char *buffer = calloc(capac, sizeof(char));
+
+  // read n bytes until nothing can be read
+  size_t n;
+  while ((n = fread(buffer, sizeof(char), capac - len - 1, stdin)) > 0) {
+    // dynamically resize
+    len += n;
+    if (len >= capac) {
+      capac *= 2;
+      buffer = realloc(buffer, sizeof(char) * capac);
+    }
+  }
+
+  // something went wrong
+  if (ferror(stdin) || len == 0) {
+    free(buffer);
+    return NULL;
+  }
+
+  buffer[len] = '\0';
+  return buffer;
+}
+
 // exit program if user passed in invalid numbers as arguments
 int parseIntOrExit(char *str) {
   // points to the next invalid character in the str
@@ -121,32 +156,25 @@ void usage(bool invalid) {
       "    -wmin \t:minimum no. of words per sentence\t(default: 4)\n"
       "    -wmax \t:maximum no. of words per sentence\t(default: 6)\n"
       "    -h/-help \t:prints this help message\n\n"
-      "Each arg must be passed either as '-arg=value' or '--arg=value'";
+      "Each arg must be passed either as '-arg=value' or '--arg=value'\n"
+      "You can also pipe another program's output into this, but it won't be "
+      "formatted\n";
 
   if (invalid)
     fprintf(stderr, "Invalid args.\n\n");
   fprintf(stderr, "%s", MSG);
 
-  exit(1);
+  exit(invalid);
 }
 
 // main loop
 void startGame(char *text, int textOffset) {
-  // display text under the stopwatch and stuff
-  moveCursor(textOffset, 0);
-  displayText(text);
-
   int size = strlen(text);
+
   // user input
   char *input = calloc(size + 1, sizeof(char));
-
-  // gotta use ints instead of size_t for the TypingStats so its atomic and
-  // lock-free, meaning the stopwatch thread can safely access userStats
-  // these strings probably wont be long enough to warrant size_t anyway
   struct TypingStats userStats = {.typed = 0, .correct = 0, .len = size};
 
-  // each individual char can be in one of three states:
-  // UNTYPED, CORRECT, INCORRECT
   // used for char-by-char text coloring
   CharState *charStates = calloc(size, sizeof(CharState));
 
@@ -154,7 +182,18 @@ void startGame(char *text, int textOffset) {
   int i = 0;
   bool isBackspace, isPrintable, isMatching;
   while (userStats.correct < size) {
-    c = getchar();
+    // update first
+    // make sure stdout is safe to write to for this (main) thread
+    flockfile(stdout);
+
+    moveCursor(textOffset, 1);
+    displayInput(i, size, input, text, charStates);
+
+    // now allow other threads (stopwatch) to write to it
+    funlockfile(stdout);
+
+    // read from the provided input stream since stdin was "used up"
+    c = fgetc(getInputStream());
 
     if (c == EOF)
       break;
@@ -202,20 +241,10 @@ void startGame(char *text, int textOffset) {
       i++;
     }
 
+    updateStats(&userStats);
+
     // always gotta have the null byte
     input[i] = '\0';
-
-    // make sure stdout is safe to write to for this (main) thread
-    flockfile(stdout);
-
-    // printing the text to the screen
-    moveCursor(textOffset, 1);
-    updateStats(&userStats);
-    displayInput(i, size, input, text, charStates);
-    fflush(stdout);
-
-    // now allow other threads (stopwatch) to write to it
-    funlockfile(stdout);
   }
 
   printf("\nDone!");

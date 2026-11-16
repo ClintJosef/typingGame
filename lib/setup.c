@@ -1,29 +1,32 @@
 #include "setup.h"
 #include "typingUtils.h"
+#include <fcntl.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
 
+static int fd = -1;
+static FILE *tty = NULL;
 static struct termios OLD;
 
 static void handleSignal(int sig);
 
-int saveTermState(void) { return tcgetattr(STDIN_FILENO, &OLD); }
-int restoreTermState(void) { return tcsetattr(STDIN_FILENO, TCSAFLUSH, &OLD); }
+int saveTermState(void) { return tcgetattr(getTtyFD(), &OLD); }
+int restoreTermState(void) { return tcsetattr(getTtyFD(), TCSAFLUSH, &OLD); }
 
 int disableCanonicalInput(void) {
   // read termios and tcsetattr man pages
   struct termios tc;
-  if (tcgetattr(STDIN_FILENO, &tc) == -1)
+  if (tcgetattr(getTtyFD(), &tc) == -1)
     return -1;
 
   tc.c_cc[VMIN] = 1;
   tc.c_cc[VTIME] = 0;
   tc.c_lflag &= ~(ICANON | ECHO);
 
-  return tcsetattr(STDIN_FILENO, TCSAFLUSH, &tc);
+  return tcsetattr(getTtyFD(), TCSAFLUSH, &tc);
 }
 
 void init(void) {
@@ -54,6 +57,26 @@ void cleanup(void) {
   // reenable canonical input mode
   if (restoreTermState() == -1)
     _exit(1);
+
+  // close /dev/tty
+  close(getTtyFD());
+}
+
+// since we read from stdin at the very start it wont be usable at this point
+// so, we read from a different tty!
+int getTtyFD(void) {
+  if (fd == -1)
+    fd = open("/dev/tty", O_RDWR);
+
+  return fd;
+}
+
+// read input from here instead
+FILE *getInputStream(void) {
+  if (tty == NULL)
+    tty = fdopen(getTtyFD(), "r");
+
+  return tty;
 }
 
 static void handleSignal(int sig) {

@@ -64,7 +64,7 @@ void showCursor(void) { write(STDOUT_FILENO, SHOWN, strlen(SHOWN)); }
 void setCheatThreshold(int threshold) { cheatThreshold = threshold; }
 void handleCheat(void) {
   // clear screen
-  ansiPrint(1, ERASE_SCREEN);
+  eraseScreen();
   moveCursor(1, 1);
 
   // the line
@@ -73,7 +73,7 @@ void handleCheat(void) {
   sleep(2);
 
   // clear again and signal to restore term
-  ansiPrint(1, ERASE_SCREEN);
+  eraseScreen();
   moveCursor(1, 1);
   killpg(0, SIGTERM);
 }
