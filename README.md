@@ -14,8 +14,8 @@ Then just run the game!
 
 ``output/typingGame``
 
-## Arguments:
-Just run `--help' or '-h'
+## Usage:
+Just run `--help' or '-h':
 ```
 > output/typingGame -h
 Usage: typingGame [-pg -smin -smax -wmin -wmax -h -help]
