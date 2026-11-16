@@ -182,16 +182,6 @@ void startGame(char *text, int textOffset) {
   int i = 0;
   bool isBackspace, isPrintable, isMatching;
   while (userStats.correct < size) {
-    // update first
-    // make sure stdout is safe to write to for this (main) thread
-    flockfile(stdout);
-
-    moveCursor(textOffset, 1);
-    displayInput(i, size, input, text, charStates);
-
-    // now allow other threads (stopwatch) to write to it
-    funlockfile(stdout);
-
     // read from the provided input stream since stdin was "used up"
     c = fgetc(getInputStream());
 
@@ -242,6 +232,15 @@ void startGame(char *text, int textOffset) {
     }
 
     updateStats(&userStats);
+
+    // make sure stdout is safe to write to for this (main) thread
+    flockfile(stdout);
+
+    moveCursor(textOffset, 1);
+    displayInput(i, size, input, text, charStates);
+
+    // now allow other threads (stopwatch) to write to it
+    funlockfile(stdout);
 
     // always gotta have the null byte
     input[i] = '\0';
