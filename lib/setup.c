@@ -7,8 +7,6 @@
 #include <termios.h>
 #include <unistd.h>
 
-static int fd = -1;
-static FILE *tty = NULL;
 static struct termios OLD;
 
 static void handleSignal(int sig);
@@ -65,6 +63,8 @@ void cleanup(void) {
 // since we read from stdin at the very start it wont be usable at this point
 // so, we read from a different tty!
 int getTtyFD(void) {
+  static int fd = -1;
+
   if (fd == -1)
     fd = open("/dev/tty", O_RDWR);
 
@@ -73,6 +73,8 @@ int getTtyFD(void) {
 
 // read input from here instead
 FILE *getInputStream(void) {
+  static FILE *tty = NULL;
+
   if (tty == NULL)
     tty = fdopen(getTtyFD(), "r");
 
