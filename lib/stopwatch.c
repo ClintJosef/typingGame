@@ -1,4 +1,5 @@
 #include "stopwatch.h"
+#include "ansi.h"
 #include "typingUtils.h"
 #include <pthread.h>
 #include <stdatomic.h>
