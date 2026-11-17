@@ -1,4 +1,4 @@
-#include "setup.h"
+#include "termUtils.h"
 #include "typingUtils.h"
 #include <fcntl.h>
 #include <signal.h>

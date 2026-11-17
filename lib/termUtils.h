@@ -1,5 +1,5 @@
-#ifndef SETUP_H
-#define SETUP_H
+#ifndef TERMUTILS_H
+#define TERMUTILS_H
 
 #include <stdio.h>
 

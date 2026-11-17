@@ -1,6 +1,6 @@
 #include "lib/args.h"
-#include "lib/setup.h"
 #include "lib/stopwatch.h"
+#include "lib/termUtils.h"
 #include "lib/textGen.h"
 #include "lib/typingUtils.h"
 #include <ctype.h>
