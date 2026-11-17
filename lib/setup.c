@@ -43,6 +43,7 @@ void init(void) {
   // in case program doesnt exit normally
   signal(SIGTERM, handleSignal);
   signal(SIGINT, handleSignal);
+  signal(SIGTSTP, handleSignal);
 }
 
 // can get called asynchronously, so available functions are limited
@@ -61,7 +62,7 @@ void cleanup(void) {
 }
 
 // since we read from stdin at the very start it wont be usable at this point
-// so, we read from a different tty!
+// so, we read from the current program's "stdin"! (/dev/tty)
 int getTtyFD(void) {
   static int fd = -1;
 
