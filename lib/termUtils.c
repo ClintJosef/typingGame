@@ -4,15 +4,19 @@
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <termcap.h>
 #include <termios.h>
 #include <unistd.h>
 
-static struct termios OLD;
+static struct termios old;
+static struct WinSize winSize;
 
+static void updateWinSize(void);
+static void handleResize(int sig);
 static void handleSignal(int sig);
 
-int saveTermState(void) { return tcgetattr(getTtyFD(), &OLD); }
-int restoreTermState(void) { return tcsetattr(getTtyFD(), TCSAFLUSH, &OLD); }
+int saveTermState(void) { return tcgetattr(getTtyFD(), &old); }
+int restoreTermState(void) { return tcsetattr(getTtyFD(), TCSAFLUSH, &old); }
 
 int disableCanonicalInput(void) {
   // read termios and tcsetattr man pages
@@ -40,6 +44,10 @@ void init(void) {
   hideCursor();
   eraseScreen();
 
+  // update winSize when necessary
+  updateWinSize();
+  signal(SIGWINCH, handleResize);
+
   // in case program doesnt exit normally
   signal(SIGTERM, handleSignal);
   signal(SIGINT, handleSignal);
@@ -55,7 +63,7 @@ void cleanup(void) {
 
   // reenable canonical input mode
   if (restoreTermState() == -1)
-    _exit(1);
+    _exit(EXIT_FAILURE);
 
   // close /dev/tty
   close(getTtyFD());
@@ -81,6 +89,23 @@ FILE *getInputStream(void) {
 
   return tty;
 }
+
+struct WinSize getWinSize(void) { return winSize; }
+
+static void updateWinSize(void) {
+  static char termbuf[1024];
+  static char *type = NULL;
+  if (type == NULL)
+    type = getenv("TERM");
+
+  if (tgetent(termbuf, type) < 0)
+    _exit(EXIT_FAILURE);
+
+  winSize.rows = tgetnum("li");
+  winSize.cols = tgetnum("co");
+}
+
+static void handleResize(int sig) { updateWinSize(); }
 
 static void handleSignal(int sig) {
   cleanup();

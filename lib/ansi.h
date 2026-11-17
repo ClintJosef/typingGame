@@ -14,5 +14,6 @@ extern const char *ERASE_LINE;
 extern const char *SAVE_SCREEN;
 extern const char *RESTORE_SCREEN;
 extern const char *ERASE_SCREEN;
+extern const char *ERASE_CUR_TO_END;
 
 #endif

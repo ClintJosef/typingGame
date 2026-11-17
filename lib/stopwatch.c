@@ -18,7 +18,7 @@ static struct timespec start;
 // at the cost of some extra overhead
 // for structs its still recommended to access them via atomic_load()
 static _Atomic(bool) running;
-static _Atomic(struct TypingStats) stats;
+static _Atomic(struct UserStats) stats;
 
 static void *stopwatchThread(void *arg);
 static double tsToDouble(struct timespec *ts);
@@ -55,7 +55,7 @@ void startStopwatch(long long sleepMs) {
 }
 
 // update stats from other threads
-void updateStats(struct TypingStats *userStats) { stats = *userStats; }
+void updateStats(struct UserStats *userStats) { stats = *userStats; }
 
 // actual thread
 static void *stopwatchThread(void *arg) {
@@ -66,7 +66,7 @@ static void *stopwatchThread(void *arg) {
   double elapsedTime;
 
   // copy of atomic struct
-  struct TypingStats currStats;
+  struct UserStats currStats;
 
   // start the stopwatch
   startTs();
@@ -87,7 +87,7 @@ static void *stopwatchThread(void *arg) {
     hideCursor();
 
     printf("%sTime taken: %.1lfs\n", ERASE_LINE, elapsedTime);
-    displayTypingStats(&currStats, elapsedTime);
+    displayUserStats(&currStats, elapsedTime);
     fflush(stdout);
 
     // now allow other threads (main) to write to it

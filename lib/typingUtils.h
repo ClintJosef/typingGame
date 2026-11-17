@@ -1,6 +1,7 @@
 #ifndef TYPINGUTILS_H
 #define TYPINGUTILS_H
 
+#include "termUtils.h"
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -16,10 +17,17 @@ struct Colors {
 // 3 size_t's are apparently too big to be 'safely' atomic
 // which is important because eventually the stopwatch and main thread
 // will be sharing one of these
-struct TypingStats {
+struct UserStats {
   int correct;
   int typed;
-  int len;
+  int textLen;
+};
+
+struct TypingInfo {
+  int textLen;
+  char *userInput;
+  char *text;
+  CharState *charStates;
 };
 
 extern const struct Colors COLORS;
@@ -34,13 +42,14 @@ void showCursor(void);
 void saveScreen(void);
 void restoreScreen(void);
 void eraseScreen(void);
+void eraseCurToEnd(void);
 void resetModes(void);
 void setCheatThreshold(int threshold);
 void handleCheat(void);
 char *getCharColor(CharState charState);
 void displayText(char *text);
-void displayInput(int pos, int size, char input[size], char text[size],
-                  CharState charStates[size]);
-void displayTypingStats(struct TypingStats *tpStats, double elapsedTime);
+void displayInput(int pos, int textOffset, struct TypingInfo *data,
+                  struct WinSize *winSize);
+void displayUserStats(struct UserStats *userStats, double elapsedTime);
 
 #endif

@@ -13,3 +13,4 @@ const char *ERASE_LINE = "\033[2K";
 const char *SAVE_SCREEN = "\033[?1049h";
 const char *RESTORE_SCREEN = "\033[?1049l";
 const char *ERASE_SCREEN = "\033[2J";
+const char *ERASE_CUR_TO_END = "\033[0J";

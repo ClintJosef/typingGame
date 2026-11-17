@@ -1,5 +1,6 @@
 #include "typingUtils.h"
 #include "ansi.h"
+#include "termUtils.h"
 #include <ctype.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -31,13 +32,20 @@ void ansiPrint(int modes, ...) {
   va_end(args);
 }
 
-void moveCursor(int row, int col) { printf("\033[%d;%df", row, col); }
+void moveCursor(int cursorPos, int col) {
+  printf("\033[%d;%df", cursorPos, col);
+}
 void moveToCol(int col) { printf("\033[%dG", col); }
 void resetModes(void) { ansiPrint(1, RESET); }
 
 // these can just write to stdout directly, regardless of cursor position
+void hideCursor(void) { write(STDOUT_FILENO, HIDDEN, strlen(HIDDEN)); }
+void showCursor(void) { write(STDOUT_FILENO, SHOWN, strlen(SHOWN)); }
 void eraseScreen(void) {
   write(STDOUT_FILENO, ERASE_SCREEN, strlen(ERASE_SCREEN));
+}
+void eraseCurToEnd(void) {
+  write(STDOUT_FILENO, ERASE_CUR_TO_END, strlen(ERASE_CUR_TO_END));
 }
 void saveScreen(void) {
   write(STDOUT_FILENO, SAVE_SCREEN, strlen(SAVE_SCREEN));
@@ -45,8 +53,6 @@ void saveScreen(void) {
 void restoreScreen(void) {
   write(STDOUT_FILENO, RESTORE_SCREEN, strlen(RESTORE_SCREEN));
 }
-void hideCursor(void) { write(STDOUT_FILENO, HIDDEN, strlen(HIDDEN)); }
-void showCursor(void) { write(STDOUT_FILENO, SHOWN, strlen(SHOWN)); }
 
 void setCheatThreshold(int threshold) { cheatThreshold = threshold; }
 void handleCheat(void) {
@@ -87,53 +93,68 @@ void displayText(char *text) {
 }
 
 // colorizes each character based their status
-void displayInput(int pos, int size, char input[size], char text[size],
-                  CharState charStates[size]) {
-  for (int i = 0; i < size; i++) {
-    bool atCursor = i == pos;
-    bool untyped = charStates[i] == UNTYPED;
-    bool covered = isblank(input[i]) && !isblank(text[i]);
+// does not write past the screen
+void displayInput(int pos, int textOffset, struct TypingInfo *data,
+                  struct WinSize *winSize) {
+  int cursorPos = 0;
+  bool atCursor, untyped, covered;
+
+  for (int i = 0; i < data->textLen; i++) {
+    // a row is winSize.cols long.
+    // if the newline char is in the middle of the line, it still advances to
+    // the next row, but only to the first column
+    // so just add winSize.cols minus the cursor's current pos in the line
+    if (data->text[i] == '\n')
+      cursorPos += winSize->cols - (cursorPos % winSize->cols);
+    else
+      cursorPos++;
+
+    // cutoff text before running out of terminal space
+    if (cursorPos / winSize->cols >= winSize->rows - textOffset)
+      break;
+
+    // rest of the loop (actually displaying)
+
+    atCursor = i == pos;
+    untyped = data->charStates[i] == UNTYPED;
+    covered = isblank(data->userInput[i]) && !isblank(data->text[i]);
 
     // custom cursor
     if (atCursor)
-      printf("%s%s%c", BOLD, UNDERLINE, text[pos]);
+      printf("%s%s%c", BOLD, UNDERLINE, data->text[pos]);
 
-    // colorize user input (green/red)
+    // colorize user userInput (green/red)
     else if (!untyped && !covered)
-      printf("%s%c", getCharColor(charStates[i]), input[i]);
+      printf("%s%c", getCharColor(data->charStates[i]), data->userInput[i]);
 
     // show faint text if user inputted a space/tab over it
     // or if its not typed yet
     else
-      printf("%s%c", FAINT, text[i]);
+      printf("%s%c", FAINT, data->text[i]);
 
     resetModes();
   }
 }
 
-void displayTypingStats(struct TypingStats *tpStats, double elapsedTime) {
+void displayUserStats(struct UserStats *userStats, double elapsedTime) {
   // pretty useful
   static double prevTime = 0;
   static double prevTyped = 0;
 
-  int correct = tpStats->correct;
-  int typed = tpStats->typed;
-  int len = tpStats->len;
-
   // for delta wpm
   double dt = elapsedTime - prevTime;
-  double dTyped = typed - prevTyped;
+  double dTyped = userStats->typed - prevTyped;
 
   // arbitrary 5-letter words per minute
   double wpm = (double)dTyped / 5 / dt * 60;
-  double avgWpm = (double)typed / 5 / elapsedTime * 60;
+  double avgWpm = (double)userStats->typed / 5 / elapsedTime * 60;
 
-  double accuracy = (double)correct / typed * 100;
-  double progress = (double)correct / len * 100;
+  double accuracy = (double)userStats->correct / userStats->typed * 100;
+  double progress = (double)userStats->correct / userStats->textLen * 100;
 
   // values are saved for the next function call
   prevTime = elapsedTime;
-  prevTyped = typed;
+  prevTyped = userStats->typed;
 
   // exit if user is "typing" too fast
   if (wpm >= cheatThreshold) {

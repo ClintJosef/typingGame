@@ -11,7 +11,7 @@ CPPFLAGS =
 LDFLAGS =
 # Libraries to link with (ex. -lpthread to link pthread lib)
 # For libraries not already included in the standard lib
-LDLIBS =
+LDLIBS = -ltermcap
 
 # Wildcard expansion
 sources = main.c $(wildcard lib/*.c)

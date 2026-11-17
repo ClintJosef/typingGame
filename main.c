@@ -41,19 +41,25 @@ int main(int argc, char *argv[]) {
 void startGame(char *text, int textOffset) {
   int size = strlen(text);
 
+  struct WinSize winSize = getWinSize();
+
   // user input
   char *input = calloc(size + 1, sizeof(char));
-  struct TypingStats userStats = {.typed = 0, .correct = 0, .len = size};
+  struct UserStats userStats = {.typed = 0, .correct = 0, .textLen = size};
 
   // used for char-by-char text coloring
   CharState *charStates = calloc(size, sizeof(CharState));
+  struct TypingInfo typingInfo = {.textLen = size,
+                                  .userInput = input,
+                                  .text = text,
+                                  .charStates = charStates};
 
   // make sure stdout is safe to write to for this (main) thread
   flockfile(stdout);
 
   // initial text (all untyped)
   moveCursor(textOffset, 1);
-  displayInput(0, size, input, text, charStates);
+  displayInput(0, textOffset, &typingInfo, &winSize);
 
   // now allow other threads (stopwatch) to write to it
   funlockfile(stdout);
@@ -118,7 +124,7 @@ void startGame(char *text, int textOffset) {
 
     flockfile(stdout);
     moveCursor(textOffset, 1);
-    displayInput(i, size, input, text, charStates);
+    displayInput(i, textOffset, &typingInfo, &winSize);
     funlockfile(stdout);
   }
 
