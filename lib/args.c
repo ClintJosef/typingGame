@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 // read stdin first, if its empty then parse the args
-char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz) {
+char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
   if (argc < 2) {
     if (!isatty(STDIN_FILENO)) {
       // try to read from stdin
@@ -14,7 +14,7 @@ char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz) {
     }
 
     // no input/couldnt read from stdin -> generate default text
-    return generateText((struct TextSize *)defaultTsz);
+    return generateText(defaultTsz);
   }
 
   // all the options

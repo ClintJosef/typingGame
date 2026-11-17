@@ -15,7 +15,7 @@ bash commands to populate these (assuming $words is the path to ^):
 adjust {3,10} for the length range of the words
 */
 
-char *generateText(struct TextSize *tsz) {
+char *generateText(const struct TextSize *tsz) {
   // .h files generated in output/
   char *lower = (char *)words_lower_txt;
   char *upper = (char *)words_upper_txt;
@@ -64,7 +64,7 @@ char *generateText(struct TextSize *tsz) {
 
 // takes a char array of words separated by newline
 // outputs a random word from it
-char *randomWord(char *words, struct WordsInfo *wi) {
+char *randomWord(char *words, const struct WordsInfo *wi) {
   size_t line = randRange(0, wi->lines - 1);
   size_t offset = wi->lineOffsets[line];
   size_t wordSize = wi->lineLengths[line];

@@ -4,7 +4,7 @@
 #include "stdbool.h"
 #include "textGen.h"
 
-char *parseArgs(int argc, char *argv[], struct TextSize *defaultTsz);
+char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz);
 char *readStdin(void);
 int parseIntOrExit(char *str);
 void usage(bool invalid);

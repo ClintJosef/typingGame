@@ -88,14 +88,10 @@ char *getCharColor(CharState charState) {
   return color;
 }
 
-void displayText(char *text) {
-  ansiPrint(5, SAVE_CUR, FAINT, text, RESET, RESTORE_CUR);
-}
-
 // colorizes each character based their status
 // does not write past the screen
-void displayInput(int pos, int textOffset, struct TypingInfo *data,
-                  struct WinSize *winSize) {
+void displayInput(int pos, int textOffset, const struct TypingInfo *data,
+                  const struct WinSize *winSize) {
   int cursorPos = 0;
   bool atCursor, untyped, covered;
 
@@ -136,7 +132,7 @@ void displayInput(int pos, int textOffset, struct TypingInfo *data,
   }
 }
 
-void displayUserStats(struct UserStats *userStats, double elapsedTime) {
+void displayUserStats(const struct UserStats *userStats, double elapsedTime) {
   // pretty useful
   static double prevTime = 0;
   static double prevTyped = 0;

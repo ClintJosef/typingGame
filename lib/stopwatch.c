@@ -21,7 +21,7 @@ static _Atomic(bool) running;
 static _Atomic(struct UserStats) stats;
 
 static void *stopwatchThread(void *arg);
-static double tsToDouble(struct timespec *ts);
+static double tsToDouble(const struct timespec *ts);
 
 void startTs(void) {
   // basically just a higher resolution time()
@@ -55,7 +55,7 @@ void startStopwatch(long long sleepMs) {
 }
 
 // update stats from other threads
-void updateStats(struct UserStats *userStats) { stats = *userStats; }
+void updateStats(const struct UserStats *userStats) { stats = *userStats; }
 
 // actual thread
 static void *stopwatchThread(void *arg) {
@@ -100,6 +100,6 @@ static void *stopwatchThread(void *arg) {
   return NULL;
 }
 
-static double tsToDouble(struct timespec *ts) {
+static double tsToDouble(const struct timespec *ts) {
   return (double)ts->tv_sec + (double)ts->tv_nsec / 1e9;
 }
