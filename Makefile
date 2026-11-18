@@ -7,6 +7,7 @@ sourceDir = lib
 sources = $(wildcard $(sourceDir)/*.c) 
 objDir = $(outputDir)/obj
 depsDir = $(outputDir)/deps
+# string substitution to create build targets (.o and .d files)
 objects = $(patsubst lib/%.c,$(objDir)/%.o,$(sources))
 dependencies = $(patsubst lib/%.c,$(depsDir)/%.d,$(sources))
 
@@ -17,14 +18,17 @@ wordsList = $(wildcard $(wordDir)/*.txt)
 wordHeaders = $(patsubst %.txt,$(outputDir)/%.h,$(wordsList))
 wHeadersDir = $(outputDir)/$(wordDir)
 
+# Just for pretty output
 BOLD = \033[1m
 RESET = \033[0m
 
 CC = cc
 # Compiler flags
-# -MMD and -MP generate .d (dependency) makefiles
-CFLAGS = -Wall -MMD -MP -MF $(depsDir)/$*.d
+# -MMD and -MP generate header targets (.d files)
+# -MF is where they should go
+CFLAGS = -Wall -MMD -MP -MF $(depsDir)/*.d
 # Preprocessor flags
+# Search outputDir for dependencies to include
 CPPFLAGS = -I$(outputDir)
 # Linker flags
 LDFLAGS =
@@ -39,8 +43,8 @@ LDLIBS = -ltermcap
 # Default target
 all: $(result)
 
-# Result requires all object files (and the output dir)
-# If present, link them all into one final executable
+# Result requires all build targets (and output dir)
+# When present, link them all into one final executable
 $(result): compileWords compile | $(outputDir)
 	@printf "$(BOLD)Linking with '$(CC) $(LDFLAGS) $(LDLIBS)'$(RESET)\n"
 	@$(CC) $(LDFLAGS) $(objects) $(LDLIBS) -o $@
