@@ -1,3 +1,4 @@
+#include "ansi.h"
 #include "args.h"
 #include "stopwatch.h"
 #include "termUtils.h"
@@ -12,11 +13,12 @@
 #include <string.h>
 
 void startGame(char *text, int textOffset);
+int clamp(int a, int min, int max);
 
 int main(int argc, char *argv[]) {
   int textOffset = 4;
   long long swSleepMs = 500;
-  int cheatThreshold = 1000;
+  int cheatThreshold = 1e6;
   struct TextSize defaultTsz = {
       .paragraphs = 2,
       .minSntn = 3,
@@ -39,47 +41,64 @@ int main(int argc, char *argv[]) {
 
 // main loop
 void startGame(char *text, int textOffset) {
+  // lotta game info
   int size = strlen(text);
-
-  struct WinSize winSize = getWinSize();
-
-  // user input
   char *input = calloc(size + 1, sizeof(char));
-  struct UserStats userStats = {.typed = 0, .correct = 0, .textLen = size};
-
-  // used for char-by-char text coloring
   CharState *charStates = calloc(size, sizeof(CharState));
+  struct WinSize winSize = getWinSize();
+  // +1 offset for page number
+  struct DisplayInfo disp = {
+      .textOffset = textOffset + 1, .rows = winSize.rows, .cols = winSize.cols};
+  struct UserStats userStats = {.typed = 0, .correct = 0, .textLen = size};
   struct TypingInfo typingInfo = {.textLen = size,
+                                  .currPage = 0,
                                   .userInput = input,
                                   .text = text,
                                   .charStates = charStates};
+  getPages(&typingInfo, &disp);
+  typingInfo.page = getPage(&typingInfo, &disp);
 
-  // make sure stdout is safe to write to for this (main) thread
+  // intial text (lock from stopwatch before writing to stdout)
   flockfile(stdout);
-
-  // initial text (all untyped)
   moveCursor(textOffset, 1);
-  displayInput(0, textOffset, &typingInfo, &winSize);
-
-  // now allow other threads (stopwatch) to write to it
+  // always one extra page at the end that i cant get rid of for some reason
+  printf("Page (%d/%d): Use arrow keys or '[' and ']'\n", typingInfo.currPage,
+         disp.pages - 1);
+  displayInput(0, &typingInfo, &disp);
   funlockfile(stdout);
 
-  int c;
+  unsigned char c;
   int i = 0;
-  bool isBackspace, isPrintable, isMatching;
+  int pageOffset = 0;
+  bool isNextPage, isPrevPage, isBackspace, isPrintable, isMatching;
   while (userStats.correct < size) {
     // read from the provided input stream since stdin was "used up"
     c = fgetc(getInputStream());
 
-    if (c == EOF)
-      break;
+    // ']' for next and '[' for prev page
+    // or arrow keys
+    isNextPage = c == 93;
+    isPrevPage = c == 91;
 
     isBackspace = c == 127 || c == 8;
-    isPrintable = isprint((unsigned char)c);
+    isPrintable = isprint(c);
     isMatching = i < size && c == text[i];
 
+    flockfile(stdout);
+
+    // enter (advance page)
+    if ((isNextPage || isPrevPage) && disp.pages > 1) {
+      int inc = isNextPage ? 1 : -1;
+      typingInfo.currPage = clamp(typingInfo.currPage + inc, 0, disp.pages);
+
+      i = pageOffset = disp.pageOffsets[typingInfo.currPage];
+      typingInfo.page = getPage(&typingInfo, &disp);
+
+      eraseScreen();
+    }
+
     // backspace
-    if (isBackspace && i > 0) {
+    else if (isBackspace && i - pageOffset > 0) {
       // handle deleting newlines first
       while (i > 0 && text[i - 1] == '\n') {
         i--;
@@ -110,7 +129,7 @@ void startGame(char *text, int textOffset) {
     }
 
     // handle adding newlines
-    while (i < size && text[i] == '\n') {
+    while (!(isNextPage || isPrevPage) && i < size && text[i] == '\n') {
       userStats.correct++;
       userStats.typed++;
       input[i] = '\n';
@@ -122,9 +141,12 @@ void startGame(char *text, int textOffset) {
 
     updateStats(&userStats);
 
-    flockfile(stdout);
     moveCursor(textOffset, 1);
-    displayInput(i, textOffset, &typingInfo, &winSize);
+    printf("Page (%d/%d): Navigate with arrow keys or '[' and ']'\n",
+           typingInfo.currPage, disp.pages - 1);
+    displayInput(i, &typingInfo, &disp);
+    fflush(stdout);
+
     funlockfile(stdout);
   }
 
@@ -134,4 +156,13 @@ void startGame(char *text, int textOffset) {
   // cleanup
   free(input);
   free(charStates);
+}
+
+// exclusive max
+int clamp(int a, int min, int max) {
+  if (a >= max)
+    return min;
+  if (a < min)
+    return max - 1;
+  return a;
 }

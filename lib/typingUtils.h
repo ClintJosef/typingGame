@@ -25,9 +25,19 @@ struct UserStats {
 
 struct TypingInfo {
   int textLen;
+  int currPage;
   char *userInput;
   char *text;
+  char *page;
   CharState *charStates;
+};
+
+struct DisplayInfo {
+  int textOffset;
+  int pages;
+  int *pageOffsets;
+  int rows;
+  int cols;
 };
 
 extern const struct Colors COLORS;
@@ -37,8 +47,10 @@ extern int cheatThreshold;
 void setCheatThreshold(int threshold);
 void handleCheat(void);
 char *getCharColor(CharState charState);
-void displayInput(int pos, int textOffset, const struct TypingInfo *data,
-                  const struct WinSize *winSize);
+void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
+char *getPage(const struct TypingInfo *typing, struct DisplayInfo *disp);
+void displayInput(int pos, const struct TypingInfo *typing,
+                  const struct DisplayInfo *disp);
 void displayUserStats(const struct UserStats *userStats, double elapsedTime);
 
 #endif

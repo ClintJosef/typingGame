@@ -1,4 +1,5 @@
 #include "termUtils.h"
+#include "ansi.h"
 #include "typingUtils.h"
 #include <fcntl.h>
 #include <signal.h>
