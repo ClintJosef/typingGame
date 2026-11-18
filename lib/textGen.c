@@ -1,6 +1,6 @@
 #include "textGen.h"
-#include "output/lower.h"
-#include "output/upper.h"
+#include "words/lower.h"
+#include "words/upper.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
