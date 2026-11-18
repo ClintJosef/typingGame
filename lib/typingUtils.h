@@ -34,16 +34,6 @@ extern const struct Colors COLORS;
 
 extern int cheatThreshold;
 
-void ansiPrint(int modes, ...);
-void moveCursor(int row, int col);
-void moveToCol(int col);
-void hideCursor(void);
-void showCursor(void);
-void saveScreen(void);
-void restoreScreen(void);
-void eraseScreen(void);
-void eraseCurToEnd(void);
-void resetModes(void);
 void setCheatThreshold(int threshold);
 void handleCheat(void);
 char *getCharColor(CharState charState);

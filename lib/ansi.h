@@ -16,4 +16,15 @@ extern const char *RESTORE_SCREEN;
 extern const char *ERASE_SCREEN;
 extern const char *ERASE_CUR_TO_END;
 
+void ansiPrint(int modes, ...);
+void moveCursor(int row, int col);
+void moveToCol(int col);
+void hideCursor(void);
+void showCursor(void);
+void saveScreen(void);
+void restoreScreen(void);
+void eraseScreen(void);
+void eraseCurToEnd(void);
+void resetModes(void);
+
 #endif

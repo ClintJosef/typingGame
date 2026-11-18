@@ -16,44 +16,6 @@ const struct Colors COLORS = {
 // max wpm limit before it thinks user is cheating (can be set)
 int cheatThreshold = INT32_MAX;
 
-// woah, variadic function
-// first arg has to be how many args were passed (minus one)
-// note that this doesnt work for plain char's
-// this is pretty much just a really bad printf that i thought was cool
-void ansiPrint(int modes, ...) {
-  va_list args;
-  va_start(args, modes);
-
-  for (int i = 0; i < modes; i++) {
-    char *mode = va_arg(args, char *);
-    printf("%s", mode);
-  }
-
-  va_end(args);
-}
-
-void moveCursor(int cursorPos, int col) {
-  printf("\033[%d;%df", cursorPos, col);
-}
-void moveToCol(int col) { printf("\033[%dG", col); }
-void resetModes(void) { ansiPrint(1, RESET); }
-
-// these can just write to stdout directly, regardless of cursor position
-void hideCursor(void) { write(STDOUT_FILENO, HIDDEN, strlen(HIDDEN)); }
-void showCursor(void) { write(STDOUT_FILENO, SHOWN, strlen(SHOWN)); }
-void eraseScreen(void) {
-  write(STDOUT_FILENO, ERASE_SCREEN, strlen(ERASE_SCREEN));
-}
-void eraseCurToEnd(void) {
-  write(STDOUT_FILENO, ERASE_CUR_TO_END, strlen(ERASE_CUR_TO_END));
-}
-void saveScreen(void) {
-  write(STDOUT_FILENO, SAVE_SCREEN, strlen(SAVE_SCREEN));
-}
-void restoreScreen(void) {
-  write(STDOUT_FILENO, RESTORE_SCREEN, strlen(RESTORE_SCREEN));
-}
-
 void setCheatThreshold(int threshold) { cheatThreshold = threshold; }
 void handleCheat(void) {
   // clear screen
