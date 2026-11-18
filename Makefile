@@ -3,17 +3,18 @@ outputDir = output
 programName = typingGame
 result = $(outputDir)/$(programName)
 
-# Wildcard expansion
-sources = main.c $(wildcard lib/*.c) 
-# Replace suffixes
-objects = $(sources:.c=.o)
-dependencies = $(objects:.o=.d)
+sourceDir = lib
+sources = $(wildcard $(sourceDir)/*.c) 
+objDir = $(outputDir)/obj
+depsDir = $(outputDir)/deps
+objects = $(patsubst lib/%.c,$(objDir)/%.o,$(sources))
+dependencies = $(patsubst lib/%.c,$(depsDir)/%.d,$(sources))
 
 # .txt files to be compiled into .h files used by textGen
 wordDir = words
 wordsList = $(wildcard $(wordDir)/*.txt)
 # replace suffix and change name from words/* to output/words/*
-wordHeaders = $(patsubst %.txt,$(outputDir)/%.h, $(wordsList))
+wordHeaders = $(patsubst %.txt,$(outputDir)/%.h,$(wordsList))
 wHeadersDir = $(outputDir)/$(wordDir)
 
 BOLD = \033[1m
@@ -22,7 +23,7 @@ RESET = \033[0m
 CC = cc
 # Compiler flags
 # -MMD and -MP generate .d (dependency) makefiles
-CFLAGS = -Wall -MMD -MP
+CFLAGS = -Wall -MMD -MP -MF $(depsDir)/$*.d
 # Preprocessor flags
 CPPFLAGS = -I$(outputDir)
 # Linker flags
@@ -63,12 +64,18 @@ compileWords: $(wordHeaders)
 
 # Compile source files into the required object files
 # $@ is the target (.o), $< is its first prerequisite (.c)
-%.o: %.c
+$(objDir)/%.o: $(sourceDir)/%.c | $(objDir) $(depsDir)
 	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 	@printf "$(BOLD)Compiled $<$(RESET)\n"
 	@if [ ! -f $(outputDir)/.compiled ]; then \
 		touch $(outputDir)/.compiled; \
 	fi
+$(objDir):
+	@mkdir -p $@
+	@printf "$(BOLD)Created $@ directory$(RESET)\n"
+$(depsDir):
+	@mkdir -p $@
+	@printf "$(BOLD)Created $@ directory$(RESET)\n"
 
 # Compile .txt files to .h files for textGen
 $(wHeadersDir)/%.h: $(wordDir)/%.txt | $(wHeadersDir)
@@ -92,6 +99,6 @@ $(outputDir):
 
 # Cleanup (run with 'make clean')
 clean:
-	@rm -rf $(objects) $(dependencies) $(outputDir)
+	@rm -rf $(outputDir)
 	@printf "$(BOLD)Deleted build files$(RESET)\n"
 	@echo

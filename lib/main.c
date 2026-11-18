@@ -1,8 +1,8 @@
-#include "lib/args.h"
-#include "lib/stopwatch.h"
-#include "lib/termUtils.h"
-#include "lib/textGen.h"
-#include "lib/typingUtils.h"
+#include "args.h"
+#include "stopwatch.h"
+#include "termUtils.h"
+#include "textGen.h"
+#include "typingUtils.h"
 #include <ctype.h>
 #include <getopt.h>
 #include <signal.h>
