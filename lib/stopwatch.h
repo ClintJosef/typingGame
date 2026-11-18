@@ -8,7 +8,7 @@ void startTs(void);
 void elapsedTs(struct timespec *ts);
 void killStopWatch(void);
 void updateStats(const struct UserStats *userStats);
-void startStopwatch(long long sleepMs);
+void startStopwatch(long long sleepMs, int statsTicks);
 double pollElapsedSec(void);
 
 #endif

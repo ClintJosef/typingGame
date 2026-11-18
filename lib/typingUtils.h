@@ -23,6 +23,13 @@ struct UserStats {
   int textLen;
 };
 
+struct TypingStats {
+  double wpm;
+  double avgWpm;
+  double progress;
+  double accuracy;
+};
+
 struct TypingInfo {
   int textLen;
   int currPage;
@@ -51,6 +58,8 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
 char *getPage(const struct TypingInfo *typing, struct DisplayInfo *disp);
 void displayInput(int pos, const struct TypingInfo *typing,
                   const struct DisplayInfo *disp);
-void displayUserStats(const struct UserStats *userStats, double elapsedTime);
+void displayTypingStats(const struct TypingStats *tStats);
+void calculateTypingStats(const struct UserStats *userStats,
+                          struct TypingStats *tStats, double elapsedTime);
 
 #endif

@@ -9,6 +9,10 @@
 #include <unistd.h>
 
 static pthread_t swThread;
+struct SWThreadArgs {
+  long long tickMs;
+  int statsTicks; // how many loops before stats are updated
+};
 
 // timespec just stores a number of seconds (time_t) and nanoseconds (unsigned
 // long long?)
@@ -48,10 +52,14 @@ void killStopWatch(void) {
 }
 
 // start the stopwatch in a separate thread
-void startStopwatch(long long sleepMs) {
+void startStopwatch(long long tickMs, int statsTicks) {
   running = true;
 
-  pthread_create(&swThread, NULL, &stopwatchThread, (void *)sleepMs);
+  struct SWThreadArgs *swArgs = malloc(sizeof(struct SWThreadArgs));
+  swArgs->tickMs = tickMs;
+  swArgs->statsTicks = statsTicks;
+
+  pthread_create(&swThread, NULL, &stopwatchThread, swArgs);
 }
 
 // update stats from other threads
@@ -59,17 +67,22 @@ void updateStats(const struct UserStats *userStats) { stats = *userStats; }
 
 // actual thread
 static void *stopwatchThread(void *arg) {
-  long long sleepMs = (long long)arg;
+  struct SWThreadArgs *swArgs = (struct SWThreadArgs *)arg;
+
   // convert miliseconds to nanoseconds
-  struct timespec sleepInterval = {.tv_sec = 0, .tv_nsec = sleepMs * 1e6};
+  struct timespec sleepInterval = {.tv_sec = 0,
+                                   .tv_nsec = swArgs->tickMs * 1e6};
   struct timespec elapsed;
   double elapsedTime;
 
   // copy of atomic struct
   struct UserStats currStats;
+  struct TypingStats tStats = {0};
 
   // start the stopwatch
   startTs();
+
+  int ticks = 0;
 
   // run until killStopWatch is called
   while (running) {
@@ -87,14 +100,20 @@ static void *stopwatchThread(void *arg) {
     hideCursor();
 
     printf("%sTime taken: %.1lfs\n", ERASE_LINE, elapsedTime);
-    displayUserStats(&currStats, elapsedTime);
+    displayTypingStats(&tStats);
     fflush(stdout);
 
     // now allow other threads (main) to write to it
     funlockfile(stdout);
 
-    // lap every SLEEP_INTERVAL_MS ms
+    // sleep for a tick
     nanosleep(&sleepInterval, NULL);
+    ticks++;
+
+    if (ticks >= swArgs->statsTicks) {
+      calculateTypingStats(&currStats, &tStats, elapsedTime);
+      ticks = 0;
+    }
   }
 
   return NULL;

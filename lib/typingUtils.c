@@ -142,7 +142,14 @@ void displayInput(int pos, const struct TypingInfo *typing,
   }
 }
 
-void displayUserStats(const struct UserStats *userStats, double elapsedTime) {
+void displayTypingStats(const struct TypingStats *tStats) {
+  printf("%sWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf%%, Progress: %.0lf%%",
+         ERASE_LINE, tStats->wpm, tStats->avgWpm, tStats->accuracy,
+         tStats->progress);
+}
+
+void calculateTypingStats(const struct UserStats *userStats,
+                          struct TypingStats *tStats, double elapsedTime) {
   // pretty useful
   static double prevTime = 0;
   static double prevTyped = 0;
@@ -152,22 +159,19 @@ void displayUserStats(const struct UserStats *userStats, double elapsedTime) {
   double dTyped = userStats->typed - prevTyped;
 
   // arbitrary 5-letter words per minute
-  double wpm = (double)dTyped / 5 / dt * 60;
-  double avgWpm = (double)userStats->typed / 5 / elapsedTime * 60;
+  tStats->wpm = (double)dTyped / 5 / dt * 60;
+  tStats->avgWpm = (double)userStats->typed / 5 / elapsedTime * 60;
 
-  double accuracy = (double)userStats->correct / userStats->typed * 100;
-  double progress = (double)userStats->correct / userStats->textLen * 100;
+  tStats->accuracy = (double)userStats->correct / userStats->typed * 100;
+  tStats->progress = (double)userStats->correct / userStats->textLen * 100;
 
   // values are saved for the next function call
   prevTime = elapsedTime;
   prevTyped = userStats->typed;
 
   // exit if user is "typing" too fast
-  if (wpm >= cheatThreshold) {
+  if (tStats->wpm >= cheatThreshold) {
     handleCheat();
     return;
   }
-
-  printf("%sWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf%%, Progress: %.0lf%%",
-         ERASE_LINE, wpm, avgWpm, accuracy, progress);
 }

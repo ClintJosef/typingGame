@@ -16,9 +16,12 @@ void startGame(char *text, int textOffset);
 int clamp(int a, int min, int max);
 
 int main(int argc, char *argv[]) {
+  int cheatThreshold = 800;
+
+  long long tickMs = 1000 / 60;
+  int statsTicks = 30;
+
   int textOffset = 4;
-  long long swSleepMs = 500;
-  int cheatThreshold = 1e6;
   struct TextSize defaultTsz = {
       .paragraphs = 2,
       .minSntn = 3,
@@ -32,7 +35,7 @@ int main(int argc, char *argv[]) {
   char *text = parseArgs(argc, argv, &defaultTsz);
   init();
 
-  startStopwatch(swSleepMs);
+  startStopwatch(tickMs, statsTicks);
   startGame(text, textOffset);
 
   killStopWatch();
@@ -86,7 +89,7 @@ void startGame(char *text, int textOffset) {
 
     flockfile(stdout);
 
-    // enter (advance page)
+    // navigate pages
     if ((isNextPage || isPrevPage) && disp.pages > 1) {
       int inc = isNextPage ? 1 : -1;
       typingInfo.currPage = clamp(typingInfo.currPage + inc, 0, disp.pages);
@@ -142,8 +145,8 @@ void startGame(char *text, int textOffset) {
     updateStats(&userStats);
 
     moveCursor(textOffset, 1);
-    printf("Page (%d/%d): Navigate with arrow keys or '[' and ']'\n",
-           typingInfo.currPage, disp.pages - 1);
+    printf("Page (%d/%d): Use arrow keys or '[' and ']'\n", typingInfo.currPage,
+           disp.pages - 1);
     displayInput(i, &typingInfo, &disp);
     fflush(stdout);
 
