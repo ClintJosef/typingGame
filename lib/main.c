@@ -61,19 +61,18 @@ void startGame(char *text, int textOffset) {
   getPages(&typingInfo, &disp);
   typingInfo.page = getPage(&typingInfo, &disp);
 
-  // intial text (lock from stopwatch before writing to stdout)
+  // intial text (lock stdout from stopwatch before writing)
   flockfile(stdout);
-  moveCursor(textOffset, 1);
-  // always one extra page at the end that i cant get rid of for some reason
-  printf("Page (%d/%d): Use arrow keys or '[' and ']'\n", typingInfo.currPage,
-         disp.pages - 1);
-  displayInput(0, &typingInfo, &disp);
+  updateDisplay(0, &typingInfo, &disp);
   funlockfile(stdout);
 
-  unsigned char c;
   int i = 0;
   int pageOffset = 0;
+  int *pagePositions = calloc(disp.pages, sizeof(int));
+
+  unsigned char c;
   bool isNextPage, isPrevPage, isBackspace, isPrintable, isMatching;
+
   while (userStats.correct < size) {
     // read from the provided input stream since stdin was "used up"
     c = fgetc(getInputStream());
@@ -91,10 +90,16 @@ void startGame(char *text, int textOffset) {
 
     // navigate pages
     if ((isNextPage || isPrevPage) && disp.pages > 1) {
+      // save cursor position
+      pagePositions[typingInfo.currPage] = i - pageOffset;
+
       int inc = isNextPage ? 1 : -1;
       typingInfo.currPage = clamp(typingInfo.currPage + inc, 0, disp.pages);
 
       i = pageOffset = disp.pageOffsets[typingInfo.currPage];
+      // restore cursor position
+      i += pagePositions[typingInfo.currPage];
+
       typingInfo.page = getPage(&typingInfo, &disp);
 
       eraseScreen();
@@ -144,10 +149,7 @@ void startGame(char *text, int textOffset) {
 
     updateStats(&userStats);
 
-    moveCursor(textOffset, 1);
-    printf("Page (%d/%d): Use arrow keys or '[' and ']'\n", typingInfo.currPage,
-           disp.pages - 1);
-    displayInput(i, &typingInfo, &disp);
+    updateDisplay(i, &typingInfo, &disp);
     fflush(stdout);
 
     funlockfile(stdout);
@@ -157,8 +159,10 @@ void startGame(char *text, int textOffset) {
   sleep(1);
 
   // cleanup
+  free(text);
   free(input);
   free(charStates);
+  free(pagePositions);
 }
 
 // exclusive max

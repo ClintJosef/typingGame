@@ -56,6 +56,10 @@ void handleCheat(void);
 char *getCharColor(CharState charState);
 void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
 char *getPage(const struct TypingInfo *typing, struct DisplayInfo *disp);
+void updateDisplay(int pos, const struct TypingInfo *typing,
+                   const struct DisplayInfo *disp);
+void displayPageInfo(const struct TypingInfo *typing,
+                     const struct DisplayInfo *disp);
 void displayInput(int pos, const struct TypingInfo *typing,
                   const struct DisplayInfo *disp);
 void displayTypingStats(const struct TypingStats *tStats);

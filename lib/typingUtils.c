@@ -67,7 +67,7 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
     if (typing->text[i] == '\n')
       pagePos += disp->cols - (pagePos % disp->cols);
 
-    // cutoff text before running out of terminal space
+    // normal char
     else
       pagePos++;
 
@@ -81,10 +81,12 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
       pageOffsets[currPage++] = i;
     }
   }
+  // leftover chars
   if (pagePos < pageSize)
     pageOffsets[currPage] = i;
-  disp->pages = currPage;
 
+  // always get one extra page from this but i cant remove
+  disp->pages = currPage;
   disp->pageOffsets = pageOffsets;
 }
 
@@ -95,27 +97,38 @@ char *getPage(const struct TypingInfo *typing, struct DisplayInfo *disp) {
   return &typing->text[offset];
 }
 
+// display all text-related stuff
+void updateDisplay(int pos, const struct TypingInfo *typing,
+                   const struct DisplayInfo *disp) {
+  // -1 for extra page
+  moveCursor(disp->textOffset - 1, 1);
+  displayPageInfo(typing, disp);
+  displayInput(pos, typing, disp);
+}
+
 // colorizes each character based their status
 // does not write past the screen
 void displayInput(int pos, const struct TypingInfo *typing,
                   const struct DisplayInfo *disp) {
+  // assuming getPage was called
   char *text = typing->page;
   int currPage = typing->currPage;
   int userOffset = disp->pageOffsets[currPage];
 
+  // size of this page (or the whole text if its one pag)
   int textSize;
   if (disp->pages <= 1)
     textSize = typing->textLen;
   else
     textSize = disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
 
-  bool atCursor, untyped, covered;
   int userPos;
+  bool atCursor, untyped, covered;
 
   // skip trailing newlines
   int start = 0;
-  for (; text[start] == '\n'; start++)
-    ;
+  while (text[start] == '\n')
+    start++;
 
   for (int i = start; i < textSize; i++) {
     userPos = i + userOffset;
@@ -140,6 +153,13 @@ void displayInput(int pos, const struct TypingInfo *typing,
 
     resetModes();
   }
+}
+
+void displayPageInfo(const struct TypingInfo *typing,
+                     const struct DisplayInfo *disp) {
+  // -1 for extra page
+  printf("Page (%d/%d): Use arrow keys or '[' and ']'\n", typing->currPage,
+         disp->pages - 1);
 }
 
 void displayTypingStats(const struct TypingStats *tStats) {
