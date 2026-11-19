@@ -13,7 +13,7 @@
 #include <string.h>
 
 void startGame(char *text, int textOffset);
-int clamp(int a, int min, int max);
+static int clamp(int a, int min, int max);
 
 int main(int argc, char *argv[]) {
   int cheatThreshold = 800;
@@ -162,7 +162,7 @@ void startGame(char *text, int textOffset) {
 }
 
 // exclusive max
-int clamp(int a, int min, int max) {
+static int clamp(int a, int min, int max) {
   if (a >= max)
     return min;
   if (a < min)

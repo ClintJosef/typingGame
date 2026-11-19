@@ -33,21 +33,18 @@ void handleCheat(void) {
   killpg(0, SIGTERM);
 }
 
-char *getCharColor(CharState charState) {
-  char *color;
+const char *getCharColor(CharState charState) {
   switch (charState) {
   case INCORRECT:
-    color = COLORS.incorrect;
+    return COLORS.incorrect;
     break;
   case CORRECT:
-    color = COLORS.correct;
+    return COLORS.correct;
     break;
   case UNTYPED:
-    color = COLORS.untyped;
+    return COLORS.untyped;
     break;
   }
-
-  return color;
 }
 
 void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {

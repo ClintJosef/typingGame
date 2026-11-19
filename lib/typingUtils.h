@@ -2,16 +2,14 @@
 #define TYPINGUTILS_H
 
 #include "termUtils.h"
-#include <stdbool.h>
-#include <stdlib.h>
 
 // UNTYPED = 0 for calloc (just to be safe)
 typedef enum { UNTYPED = 0, INCORRECT, CORRECT } CharState;
 
 struct Colors {
-  char *untyped;
-  char *incorrect;
-  char *correct;
+  const char *untyped;
+  const char *incorrect;
+  const char *correct;
 };
 
 // 3 size_t's are apparently too big to be 'safely' atomic
@@ -53,7 +51,7 @@ extern int cheatThreshold;
 
 void setCheatThreshold(int threshold);
 void handleCheat(void);
-char *getCharColor(CharState charState);
+const char *getCharColor(CharState charState);
 void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
 char *getPage(const struct TypingInfo *typing, const struct DisplayInfo *disp);
 int getPageSize(const struct TypingInfo *typing,

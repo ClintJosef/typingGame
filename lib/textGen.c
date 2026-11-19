@@ -127,11 +127,13 @@ size_t appendStr(char **str, size_t size, char *add) {
 size_t allValidChars(char *text) {
   size_t size = strlen(text);
 
+  // advance pointer to iterate through text
   while (*text != '\0') {
     if (*text == '\n')
       size--;
     text++;
   }
+
   return size;
 }
 

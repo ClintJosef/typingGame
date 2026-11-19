@@ -5,14 +5,11 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 
 static pthread_t swThread;
-struct SWThreadArgs {
-  long long tickMs;
-  int statsTicks; // how many loops before stats are updated
-};
 
 // timespec just stores a number of seconds (time_t) and nanoseconds (unsigned
 // long long?)
@@ -25,7 +22,6 @@ static _Atomic(bool) running;
 static _Atomic(struct UserStats) stats;
 
 static void *stopwatchThread(void *arg);
-static double tsToDouble(const struct timespec *ts);
 
 void startTs(void) {
   // basically just a higher resolution time()
@@ -65,17 +61,30 @@ void startStopwatch(long long tickMs, int statsTicks) {
 // update stats from other threads
 void updateStats(const struct UserStats *userStats) { stats = *userStats; }
 
+// convert miliseconds to timespec
+void msToTs(long long ms, struct timespec *ts) {
+  time_t seconds = ms / 1000;
+  unsigned long long nseconds = (ms % 1000) * 1e6;
+
+  ts->tv_sec = seconds;
+  ts->tv_nsec = nseconds;
+}
+
+// convert timespec to time in seconds
+double tsToDouble(const struct timespec *ts) {
+  return (double)ts->tv_sec + (double)ts->tv_nsec / 1e9;
+}
+
 // actual thread
 static void *stopwatchThread(void *arg) {
   struct SWThreadArgs *swArgs = (struct SWThreadArgs *)arg;
 
-  // convert miliseconds to nanoseconds
-  struct timespec sleepInterval = {.tv_sec = 0,
-                                   .tv_nsec = swArgs->tickMs * 1e6};
+  struct timespec sleepInterval;
+  msToTs(swArgs->tickMs, &sleepInterval);
+
   struct timespec elapsed;
   double elapsedTime;
 
-  // copy of atomic struct
   struct UserStats currStats;
   struct TypingStats tStats = {0};
 
@@ -110,15 +119,15 @@ static void *stopwatchThread(void *arg) {
     nanosleep(&sleepInterval, NULL);
     ticks++;
 
+    // time to recalculate
     if (ticks >= swArgs->statsTicks) {
       calculateTypingStats(&currStats, &tStats, elapsedTime);
       ticks = 0;
     }
   }
 
-  return NULL;
-}
+  // cleanup
+  free(swArgs);
 
-static double tsToDouble(const struct timespec *ts) {
-  return (double)ts->tv_sec + (double)ts->tv_nsec / 1e9;
+  return NULL;
 }
