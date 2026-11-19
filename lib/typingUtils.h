@@ -55,7 +55,9 @@ void setCheatThreshold(int threshold);
 void handleCheat(void);
 char *getCharColor(CharState charState);
 void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
-char *getPage(const struct TypingInfo *typing, struct DisplayInfo *disp);
+char *getPage(const struct TypingInfo *typing, const struct DisplayInfo *disp);
+int getPageSize(const struct TypingInfo *typing,
+                const struct DisplayInfo *disp);
 void updateDisplay(int pos, const struct TypingInfo *typing,
                    const struct DisplayInfo *disp);
 void displayPageInfo(const struct TypingInfo *typing,

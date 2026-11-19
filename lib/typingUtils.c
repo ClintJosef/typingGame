@@ -71,15 +71,14 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
     else
       pagePos++;
 
-    i++;
-
     // crossing a page
     if (pagePos >= pageSize) {
       pagePos = 0;
 
-      pageOffsets = realloc(pageOffsets, sizeof(&pageOffsets) + sizeof(int));
+      pageOffsets = realloc(pageOffsets, (currPage + 1) * sizeof(int));
       pageOffsets[currPage++] = i;
     }
+    i++;
   }
   // leftover chars
   if (pagePos < pageSize)
@@ -91,10 +90,22 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
 }
 
 // return page slice of text
-char *getPage(const struct TypingInfo *typing, struct DisplayInfo *disp) {
+char *getPage(const struct TypingInfo *typing, const struct DisplayInfo *disp) {
   int offset = disp->pageOffsets[typing->currPage];
 
   return &typing->text[offset];
+}
+
+// return size of current page
+int getPageSize(const struct TypingInfo *typing,
+                const struct DisplayInfo *disp) {
+  int currPage = typing->currPage;
+
+  // only one page -> just the whole text
+  if (disp->pages <= 1)
+    return typing->textLen;
+  else
+    return disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
 }
 
 // display all text-related stuff
@@ -113,27 +124,25 @@ void displayInput(int pos, const struct TypingInfo *typing,
   // assuming getPage was called
   char *text = typing->page;
   int currPage = typing->currPage;
+  int pageSize = getPageSize(typing, disp);
   int userOffset = disp->pageOffsets[currPage];
-
-  // size of this page (or the whole text if its one pag)
-  int textSize;
-  if (disp->pages <= 1)
-    textSize = typing->textLen;
-  else
-    textSize = disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
 
   int userPos;
   bool atCursor, untyped, covered;
 
   // skip trailing newlines
   int start = 0;
-  while (text[start] == '\n')
+  while (text[start] == '\n') {
     start++;
+  }
+  if (pos - userOffset < start) {
+    pos += start;
+  }
 
-  for (int i = start; i < textSize; i++) {
+  for (int i = start; i < pageSize; i++) {
     userPos = i + userOffset;
 
-    atCursor = userPos - start == pos;
+    atCursor = userPos == pos;
     untyped = typing->charStates[userPos] == UNTYPED;
     covered = isblank(typing->userInput[userPos]) && !isblank(text[i]);
 
