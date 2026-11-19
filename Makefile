@@ -26,7 +26,7 @@ CC = cc
 # Compiler flags
 # -MMD and -MP generate header targets (.d files)
 # -MF is where they should go
-CFLAGS = -Wall -MMD -MP -MF $(depsDir)/*.d
+CFLAGS = -Wall -MMD -MP -MF $(depsDir)/$*.d
 # Preprocessor flags
 # Search outputDir for dependencies to include
 CPPFLAGS = -I$(outputDir)
