@@ -123,5 +123,17 @@ size_t appendStr(char **str, size_t size, char *add) {
   return size + appendLen;
 }
 
+// basically just get how many non-newline characters there are
+size_t allValidChars(char *text) {
+  size_t size = strlen(text);
+
+  while (*text != '\0') {
+    if (*text == '\n')
+      size--;
+    text++;
+  }
+  return size;
+}
+
 // just a random number within a range
 int randRange(int min, int max) { return min + rand() % (max - min + 1); }

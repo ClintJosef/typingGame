@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
 
   killStopWatch();
   cleanup();
+  free(text);
 }
 
 // main loop
@@ -68,12 +69,14 @@ void startGame(char *text, int textOffset) {
 
   int i = 0;
   int pageOffset = 0;
+  int pageSize = getPageSize(&typingInfo, &disp);
   int *pagePositions = calloc(disp.pages, sizeof(int));
 
   unsigned char c;
-  bool isNextPage, isPrevPage, isBackspace, isPrintable, isMatching;
+  bool isNextPage, isPrevPage, isBackspace, isPrintable;
+  size_t winReq = allValidChars(text);
 
-  while (userStats.correct < size) {
+  while (userStats.correct < winReq) {
     // read from the provided input stream since stdin was "used up"
     c = fgetc(getInputStream());
 
@@ -81,10 +84,8 @@ void startGame(char *text, int textOffset) {
     // or arrow keys
     isNextPage = c == 93;
     isPrevPage = c == 91;
-
     isBackspace = c == 127 || c == 8;
     isPrintable = isprint(c);
-    isMatching = i < size && c == text[i];
 
     flockfile(stdout);
 
@@ -95,12 +96,12 @@ void startGame(char *text, int textOffset) {
 
       int inc = isNextPage ? 1 : -1;
       typingInfo.currPage = clamp(typingInfo.currPage + inc, 0, disp.pages);
-
-      i = pageOffset = disp.pageOffsets[typingInfo.currPage];
-      // restore cursor position
-      i += pagePositions[typingInfo.currPage];
-
       typingInfo.page = getPage(&typingInfo, &disp);
+      pageSize = getPageSize(&typingInfo, &disp);
+
+      // restore cursor position
+      i = pageOffset = disp.pageOffsets[typingInfo.currPage];
+      i += pagePositions[typingInfo.currPage];
 
       eraseScreen();
     }
@@ -110,8 +111,6 @@ void startGame(char *text, int textOffset) {
       // handle deleting newlines first
       while (i > 0 && text[i - 1] == '\n') {
         i--;
-        userStats.correct--;
-        userStats.typed--;
         charStates[i] = UNTYPED;
       }
 
@@ -123,23 +122,22 @@ void startGame(char *text, int textOffset) {
       charStates[i] = UNTYPED;
     }
 
-    // can be printed
-    else if (isPrintable && i < size) {
+    // can be printed and within page
+    else if (isPrintable && i - pageOffset < pageSize) {
       // match chars
-      if (isMatching) {
+      if (c == text[i]) {
         charStates[i] = CORRECT;
         userStats.correct++;
       } else
         charStates[i] = INCORRECT;
+
       input[i] = c;
       i++;
       userStats.typed++;
     }
 
     // handle adding newlines
-    while (!(isNextPage || isPrevPage) && i < size && text[i] == '\n') {
-      userStats.correct++;
-      userStats.typed++;
+    while (i < size && text[i] == '\n') {
       input[i] = '\n';
       i++;
     }
@@ -151,7 +149,6 @@ void startGame(char *text, int textOffset) {
 
     updateDisplay(i, &typingInfo, &disp);
     fflush(stdout);
-
     funlockfile(stdout);
   }
 
@@ -159,7 +156,6 @@ void startGame(char *text, int textOffset) {
   sleep(1);
 
   // cleanup
-  free(text);
   free(input);
   free(charStates);
   free(pagePositions);
