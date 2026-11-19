@@ -51,6 +51,8 @@ void init(void) {
 
   // in case program doesnt exit normally
   signal(SIGTERM, handleSignal);
+  signal(SIGSEGV, handleSignal);
+  signal(SIGBUS, handleSignal);
   signal(SIGINT, handleSignal);
   signal(SIGTSTP, handleSignal);
 }
