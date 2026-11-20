@@ -19,6 +19,7 @@ static struct timespec start;
 // at the cost of some extra overhead
 // for structs its still recommended to access them via atomic_load()
 static _Atomic(bool) running;
+static _Atomic(bool) stopped;
 static _Atomic(struct UserStats) stats;
 
 static void *stopwatchThread(void *arg);
@@ -43,13 +44,19 @@ void elapsedTs(struct timespec *ts) {
 
 // call for stopwatch thread to kill itself
 void killStopWatch(void) {
+  // make sure this is only called once
+  if (stopped)
+    return;
+
   running = false;
   pthread_join(swThread, NULL);
+  stopped = true;
 }
 
 // start the stopwatch in a separate thread
 void startStopwatch(long long tickMs, int statsTicks) {
   running = true;
+  stopped = false;
 
   struct SWThreadArgs *swArgs = malloc(sizeof(struct SWThreadArgs));
   swArgs->tickMs = tickMs;
@@ -94,8 +101,7 @@ static void *stopwatchThread(void *arg) {
   int ticks = 0;
 
   // run until killStopWatch is called
-  // or user is cheating (cant stop it from the main thread for some reason)
-  while (running && !isCheating()) {
+  while (running) {
     elapsedTs(&elapsed);
     elapsedTime = tsToDouble(&elapsed);
 

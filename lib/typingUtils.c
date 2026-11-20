@@ -31,12 +31,6 @@ void handleCheat(void) {
   printf("You dirty cheater.");
   fflush(stdout);
   sleep(2);
-
-  // clear again and signal to restore term
-  eraseScreen();
-  moveCursor(1, 1);
-
-  killpg(0, SIGTERM);
 }
 
 const char *getCharColor(CharState charState) {

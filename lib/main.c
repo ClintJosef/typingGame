@@ -5,12 +5,11 @@
 #include "textGen.h"
 #include "typingUtils.h"
 #include <ctype.h>
-#include <getopt.h>
-#include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
+#include <unistd.h>
 
 void startGame(char *text, int textOffset, int pollMs);
 static int clamp(int a, int min, int max);
@@ -30,7 +29,7 @@ int main(int argc, char *argv[]) {
       .maxWordSntn = 6,
   };
 
-  int pollMs = 50;
+  int pollMs = 100;
 
   setCheatThreshold(cheatThreshold);
   srand(time(NULL));
@@ -42,7 +41,6 @@ int main(int argc, char *argv[]) {
 
   killStopWatch();
   cleanup();
-  free(text);
 }
 
 // main loop
@@ -79,7 +77,7 @@ void startGame(char *text, int textOffset, int pollMs) {
   bool isNextPage, isPrevPage, isBackspace, isPrintable;
   size_t winReq = allValidChars(text);
 
-  while (userStats.correct < winReq) {
+  while (userStats.correct < winReq && !isCheating()) {
     // read from the provided input stream since stdin was "used up"
     if (pollChar(pollMs, &c) == 1)
       continue;
@@ -154,19 +152,21 @@ void startGame(char *text, int textOffset, int pollMs) {
     funlockfile(stdout);
 
     updateStats(&userStats);
-    if (isCheating())
-      break;
   }
 
   // cleanup
+  free(text);
   free(input);
   free(charStates);
   free(pagePositions);
 
   if (isCheating()) {
+    killStopWatch();
     handleCheat();
+    cleanup();
   } else {
     printf("\nDone!");
+    fflush(stdout);
     sleep(1);
   }
 }

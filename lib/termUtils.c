@@ -27,7 +27,7 @@ int disableCanonicalInput(void) {
   if (tcgetattr(getTtyFD(), &tc) == -1)
     return -1;
 
-  tc.c_cc[VMIN] = 1;
+  tc.c_cc[VMIN] = 0;
   tc.c_cc[VTIME] = 0;
   tc.c_lflag &= ~(ICANON | ECHO);
 
@@ -62,7 +62,11 @@ void init(void) {
 // can get called asynchronously, so available functions are limited
 // see https://www.man7.org/linux/man-pages/man7/signal-safety.7.html
 void cleanup(void) {
-  // restore terminal and un-hide cursor safely in a signal handle
+  // flush any io still being processed
+  if (tcflush(STDOUT_FILENO, TCIOFLUSH) == -1)
+    _exit(EXIT_FAILURE);
+
+  // restore terminal and un-hide cursor
   restoreScreen();
   showCursor();
 
@@ -96,6 +100,7 @@ FILE *getInputStream(void) {
 }
 
 // getchar/getc/fgetc block too much
+// polls a single char and then flushes the buffer
 int pollChar(int timeout, char *c) {
   static struct pollfd pfd = {.fd = -1, .events = POLLIN};
   if (pfd.fd == -1)
@@ -111,6 +116,9 @@ int pollChar(int timeout, char *c) {
   int n = read(pfd.fd, c, 1);
   // EOF reached || error occurred
   if (n == 0 || n == -1)
+    return 1;
+
+  if (tcflush(getTtyFD(), TCIFLUSH) == -1)
     return 1;
 
   return 0;
