@@ -85,8 +85,8 @@ static void *stopwatchThread(void *arg) {
   struct timespec elapsed;
   double elapsedTime;
 
-  struct UserStats currStats;
-  struct TypingStats tStats = {0};
+  struct UserStats userStats;
+  struct TypingStats tStats;
 
   // start the stopwatch
   startTs();
@@ -94,10 +94,8 @@ static void *stopwatchThread(void *arg) {
   int ticks = 0;
 
   // run until killStopWatch is called
-  while (running) {
-    // thread-safe way to access a struct
-    currStats = atomic_load(&stats);
-
+  // or user is cheating (cant stop it from the main thread for some reason)
+  while (running && !isCheating()) {
     elapsedTs(&elapsed);
     elapsedTime = tsToDouble(&elapsed);
 
@@ -121,7 +119,8 @@ static void *stopwatchThread(void *arg) {
 
     // time to recalculate
     if (ticks >= swArgs->statsTicks) {
-      calculateTypingStats(&currStats, &tStats, elapsedTime);
+      userStats = atomic_load(&stats);
+      calculateTypingStats(&userStats, &tStats, elapsedTime);
       ticks = 0;
     }
   }

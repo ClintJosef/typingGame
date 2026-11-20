@@ -2,6 +2,7 @@
 #include "ansi.h"
 #include "typingUtils.h"
 #include <fcntl.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -92,6 +93,27 @@ FILE *getInputStream(void) {
     tty = fdopen(getTtyFD(), "r");
 
   return tty;
+}
+
+// getchar/getc/fgetc block too much
+int pollChar(int timeout, char *c) {
+  static struct pollfd pfd = {.fd = -1, .events = POLLIN};
+  if (pfd.fd == -1)
+    pfd.fd = getTtyFD();
+
+  // block until tty is ready, or {timeout} miliseconds have passed
+  int ready = poll(&pfd, 1, timeout);
+  // not ready || error occurred
+  if (ready == 0 || ready == -1)
+    return 1;
+
+  // read from the now-ready tty
+  int n = read(pfd.fd, c, 1);
+  // EOF reached || error occurred
+  if (n == 0 || n == -1)
+    return 1;
+
+  return 0;
 }
 
 struct WinSize getWinSize(void) { return winSize; }

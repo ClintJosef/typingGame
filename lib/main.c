@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void startGame(char *text, int textOffset);
+void startGame(char *text, int textOffset, int pollMs);
 static int clamp(int a, int min, int max);
 
 int main(int argc, char *argv[]) {
@@ -30,13 +30,15 @@ int main(int argc, char *argv[]) {
       .maxWordSntn = 6,
   };
 
+  int pollMs = 50;
+
   setCheatThreshold(cheatThreshold);
   srand(time(NULL));
   char *text = parseArgs(argc, argv, &defaultTsz);
   init();
 
   startStopwatch(tickMs, statsTicks);
-  startGame(text, textOffset);
+  startGame(text, textOffset, pollMs);
 
   killStopWatch();
   cleanup();
@@ -44,7 +46,7 @@ int main(int argc, char *argv[]) {
 }
 
 // main loop
-void startGame(char *text, int textOffset) {
+void startGame(char *text, int textOffset, int pollMs) {
   // lotta game info
   int size = strlen(text);
   char *input = calloc(size + 1, sizeof(char));
@@ -65,6 +67,7 @@ void startGame(char *text, int textOffset) {
   // intial text (lock stdout from stopwatch before writing)
   flockfile(stdout);
   updateDisplay(0, &typingInfo, &disp);
+  fflush(stdout);
   funlockfile(stdout);
 
   int i = 0;
@@ -72,13 +75,14 @@ void startGame(char *text, int textOffset) {
   int pageSize = getPageSize(&typingInfo, &disp);
   int *pagePositions = calloc(disp.pages, sizeof(int));
 
-  unsigned char c;
+  char c;
   bool isNextPage, isPrevPage, isBackspace, isPrintable;
   size_t winReq = allValidChars(text);
 
   while (userStats.correct < winReq) {
     // read from the provided input stream since stdin was "used up"
-    c = fgetc(getInputStream());
+    if (pollChar(pollMs, &c) == 1)
+      continue;
 
     // ']' for next and '[' for prev page
     // or arrow keys
@@ -145,20 +149,26 @@ void startGame(char *text, int textOffset) {
     // always gotta have the null byte
     input[i] = '\0';
 
-    updateStats(&userStats);
-
     updateDisplay(i, &typingInfo, &disp);
     fflush(stdout);
     funlockfile(stdout);
-  }
 
-  printf("\nDone!");
-  sleep(1);
+    updateStats(&userStats);
+    if (isCheating())
+      break;
+  }
 
   // cleanup
   free(input);
   free(charStates);
   free(pagePositions);
+
+  if (isCheating()) {
+    handleCheat();
+  } else {
+    printf("\nDone!");
+    sleep(1);
+  }
 }
 
 // exclusive max

@@ -4,19 +4,24 @@
 #include <ctype.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
 
 const struct Colors COLORS = {
     .untyped = "\033[2m", .incorrect = "\033[31m", .correct = "\033[38;5;76m"};
 
 // max wpm limit before it thinks user is cheating (can be set)
-int cheatThreshold = INT32_MAX;
+static int cheatThreshold = INT32_MAX;
+static _Atomic(bool) cheating = false;
 
 void setCheatThreshold(int threshold) { cheatThreshold = threshold; }
+void setCheating(void) { cheating = true; }
+bool isCheating(void) { return cheating; }
 void handleCheat(void) {
   // clear screen
   eraseScreen();
@@ -30,6 +35,7 @@ void handleCheat(void) {
   // clear again and signal to restore term
   eraseScreen();
   moveCursor(1, 1);
+
   killpg(0, SIGTERM);
 }
 
@@ -197,7 +203,7 @@ void calculateTypingStats(const struct UserStats *userStats,
 
   // exit if user is "typing" too fast
   if (tStats->wpm >= cheatThreshold) {
-    handleCheat();
+    setCheating();
     return;
   }
 }

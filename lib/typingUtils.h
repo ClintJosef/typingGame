@@ -2,6 +2,7 @@
 #define TYPINGUTILS_H
 
 #include "termUtils.h"
+#include <stdbool.h>
 
 // UNTYPED = 0 for calloc (just to be safe)
 typedef enum { UNTYPED = 0, INCORRECT, CORRECT } CharState;
@@ -47,9 +48,9 @@ struct DisplayInfo {
 
 extern const struct Colors COLORS;
 
-extern int cheatThreshold;
-
 void setCheatThreshold(int threshold);
+void setCheating(void);
+bool isCheating(void);
 void handleCheat(void);
 const char *getCharColor(CharState charState);
 void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
