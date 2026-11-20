@@ -68,20 +68,18 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
     else
       pagePos++;
 
+    i++;
     // crossing a page
     if (pagePos >= pageSize) {
-      pagePos = 0;
-
-      pageOffsets = realloc(pageOffsets, (currPage + 1) * sizeof(int));
+      pageOffsets = realloc(pageOffsets, sizeof(pageOffsets) + sizeof(int));
       pageOffsets[currPage++] = i;
+      pagePos %= pageSize;
     }
-    i++;
   }
-  // leftover chars
-  if (pagePos < pageSize)
-    pageOffsets[currPage] = i;
+  // currPage always 1 more by the end of the loop
+  if (currPage > 1)
+    currPage--;
 
-  // always get one extra page from this but i cant remove
   disp->pages = currPage;
   disp->pageOffsets = pageOffsets;
 }
@@ -99,8 +97,10 @@ int getPageSize(const struct TypingInfo *typing,
   int currPage = typing->currPage;
 
   // only one page -> just the whole text
-  if (disp->pages <= 1)
+  if (disp->pages < 1)
     return typing->textLen;
+  else if (currPage == disp->pages)
+    return typing->textLen - disp->pageOffsets[currPage];
   else
     return disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
 }
@@ -108,7 +108,6 @@ int getPageSize(const struct TypingInfo *typing,
 // display all text-related stuff
 void updateDisplay(int pos, const struct TypingInfo *typing,
                    const struct DisplayInfo *disp) {
-  // -1 for extra page
   moveCursor(disp->textOffset - 1, 1);
   displayPageInfo(typing, disp);
   displayInput(pos, typing, disp);
@@ -164,8 +163,8 @@ void displayInput(int pos, const struct TypingInfo *typing,
 void displayPageInfo(const struct TypingInfo *typing,
                      const struct DisplayInfo *disp) {
   // -1 for extra page
-  printf("Page (%d/%d): Use arrow keys or '[' and ']'\n", typing->currPage,
-         disp->pages - 1);
+  printf("Page (%d/%d): Use '[' or ']'\n", typing->currPage + 1,
+         disp->pages + 1);
 }
 
 void displayTypingStats(const struct TypingStats *tStats) {

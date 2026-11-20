@@ -83,7 +83,6 @@ void startGame(char *text, int textOffset, int pollMs) {
       continue;
 
     // ']' for next and '[' for prev page
-    // or arrow keys
     isNextPage = c == 93;
     isPrevPage = c == 91;
     isBackspace = c == 127 || c == 8;
@@ -92,7 +91,7 @@ void startGame(char *text, int textOffset, int pollMs) {
     flockfile(stdout);
 
     // navigate pages
-    if ((isNextPage || isPrevPage) && disp.pages > 1) {
+    if ((isNextPage || isPrevPage) && disp.pages >= 1) {
       // save cursor position
       pagePositions[typingInfo.currPage] = i - pageOffset;
 
@@ -105,23 +104,26 @@ void startGame(char *text, int textOffset, int pollMs) {
       i = pageOffset = disp.pageOffsets[typingInfo.currPage];
       i += pagePositions[typingInfo.currPage];
 
-      eraseScreen();
+      // erase current page from the screen
+      moveCursor(textOffset, 1);
+      eraseCurToEnd();
     }
 
     // backspace
     else if (isBackspace && i - pageOffset > 0) {
       // handle deleting newlines first
-      while (i > 0 && text[i - 1] == '\n') {
+      while (i - pageOffset > 0 && text[i - 1] == '\n') {
         i--;
-        charStates[i] = UNTYPED;
       }
 
       // normal deletion
-      i--;
-      userStats.typed--;
-      if (charStates[i] == CORRECT)
-        userStats.correct--;
-      charStates[i] = UNTYPED;
+      if (i - pageOffset > 0) {
+        i--;
+        userStats.typed--;
+        charStates[i] = UNTYPED;
+        if (charStates[i] == CORRECT)
+          userStats.correct--;
+      }
     }
 
     // can be printed and within page
@@ -171,11 +173,10 @@ void startGame(char *text, int textOffset, int pollMs) {
   }
 }
 
-// exclusive max
 static int clamp(int a, int min, int max) {
-  if (a >= max)
+  if (a > max)
     return min;
   if (a < min)
-    return max - 1;
+    return max;
   return a;
 }
