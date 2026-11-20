@@ -77,10 +77,7 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
     }
   }
   // currPage always 1 more by the end of the loop
-  if (currPage > 1)
-    currPage--;
-
-  disp->pages = currPage;
+  disp->pages = currPage - 1;
   disp->pageOffsets = pageOffsets;
 }
 
