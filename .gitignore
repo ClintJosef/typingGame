@@ -1,5 +1,5 @@
 .ccls-cache/
 **/**.DS_STORE
-output/
+build/
 compile_commands.json
 test.c

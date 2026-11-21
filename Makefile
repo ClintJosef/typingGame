@@ -1,15 +1,15 @@
 # Compiled game location
-outputDir = output
+outputDir = build
 programName = typingGame
 result = $(outputDir)/$(programName)
 
-sourceDir = lib
+sourceDir = src
 sources = $(wildcard $(sourceDir)/*.c) 
 objDir = $(outputDir)/obj
 depsDir = $(outputDir)/deps
 # string substitution to create build targets (.o and .d files)
-objects = $(patsubst lib/%.c,$(objDir)/%.o,$(sources))
-dependencies = $(patsubst lib/%.c,$(depsDir)/%.d,$(sources))
+objects = $(patsubst $(sourceDir)/%.c,$(objDir)/%.o,$(sources))
+dependencies = $(patsubst $(sourceDir)/%.c,$(depsDir)/%.d,$(sources))
 
 # .txt files to be compiled into .h files used by textGen
 wordDir = words

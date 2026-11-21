@@ -17,11 +17,11 @@ make
 Then just run the game!
 
 ```
-output/typingGame
+build/typingGame
 ```
 
 ## Usage:
-Just run `--help' or '-h':
+Run `--help' or '-h':
 ```
 > output/typingGame -h
 Usage: typingGame [-pg -smin -smax -wmin -wmax -h -help]
