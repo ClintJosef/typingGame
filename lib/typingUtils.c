@@ -71,7 +71,7 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
     i++;
     // crossing a page
     if (pagePos >= pageSize) {
-      pageOffsets = realloc(pageOffsets, sizeof(pageOffsets) + sizeof(int));
+      pageOffsets = realloc(pageOffsets, (currPage + 1) * sizeof(int));
       pageOffsets[currPage++] = i;
       pagePos %= pageSize;
     }
@@ -106,7 +106,8 @@ int getPageSize(const struct TypingInfo *typing,
 void updateDisplay(int pos, const struct TypingInfo *typing,
                    const struct DisplayInfo *disp) {
   moveCursor(disp->textOffset - 1, 1);
-  displayPageInfo(typing, disp);
+  if (disp->pages >= 1)
+    displayPageInfo(typing, disp);
   displayInput(pos, typing, disp);
 }
 
@@ -148,10 +149,10 @@ void displayInput(int pos, const struct TypingInfo *typing,
       printf("%s%c", getCharColor(typing->charStates[userPos]),
              typing->userInput[userPos]);
 
-    // show faint text if user inputted a space/tab over it
-    // or if its not typed yet
+    // show original text if untyped
+    // or if it wouldve been covered by a space
     else
-      printf("%s%c", FAINT, text[i]);
+      printf("%s%s%c", ITALIC, FAINT, text[i]);
 
     resetModes();
   }
@@ -159,15 +160,15 @@ void displayInput(int pos, const struct TypingInfo *typing,
 
 void displayPageInfo(const struct TypingInfo *typing,
                      const struct DisplayInfo *disp) {
-  // -1 for extra page
-  printf("Page (%d/%d): Use '[' or ']'\n", typing->currPage + 1,
-         disp->pages + 1);
+  static char fmt[] = "Page (%d/%d): Use '[' or ']'\n";
+  printf(fmt, typing->currPage + 1, disp->pages + 1);
 }
 
 void displayTypingStats(const struct TypingStats *tStats) {
-  printf("%sWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf%%, Progress: %.0lf%%",
-         ERASE_LINE, tStats->wpm, tStats->avgWpm, tStats->accuracy,
-         tStats->progress);
+  static char fmt[] =
+      "\rWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf%%, Progress: %.0lf%%";
+  eraseLine();
+  printf(fmt, tStats->wpm, tStats->avgWpm, tStats->accuracy, tStats->progress);
 }
 
 void calculateTypingStats(const struct UserStats *userStats,
@@ -180,20 +181,18 @@ void calculateTypingStats(const struct UserStats *userStats,
   double dt = elapsedTime - prevTime;
   double dTyped = userStats->typed - prevTyped;
 
+  // values are saved for the next function call
+  prevTime = elapsedTime;
+  prevTyped = userStats->typed;
+
   // arbitrary 5-letter words per minute
   tStats->wpm = (double)dTyped / 5 / dt * 60;
   tStats->avgWpm = (double)userStats->typed / 5 / elapsedTime * 60;
 
   tStats->accuracy = (double)userStats->correct / userStats->typed * 100;
-  tStats->progress = (double)userStats->correct / userStats->textLen * 100;
-
-  // values are saved for the next function call
-  prevTime = elapsedTime;
-  prevTyped = userStats->typed;
+  tStats->progress = (double)userStats->typed / userStats->textLen * 100;
 
   // exit if user is "typing" too fast
-  if (tStats->wpm >= cheatThreshold) {
+  if (tStats->wpm >= cheatThreshold)
     setCheating();
-    return;
-  }
 }
