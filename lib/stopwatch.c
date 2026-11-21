@@ -62,7 +62,7 @@ void startStopwatch(long long tickMs, int statsTicks) {
   swArgs->tickMs = tickMs;
   swArgs->statsTicks = statsTicks;
 
-  pthread_create(&swThread, NULL, &stopwatchThread, swArgs);
+  pthread_create(&swThread, NULL, stopwatchThread, swArgs);
 }
 
 // update stats from other threads
@@ -84,10 +84,12 @@ double tsToDouble(const struct timespec *ts) {
 
 // actual thread
 static void *stopwatchThread(void *arg) {
+  static char timeFmt[] = "\rTime taken: %.1lfs\n";
+
   struct SWThreadArgs *swArgs = (struct SWThreadArgs *)arg;
 
-  struct timespec sleepInterval;
-  msToTs(swArgs->tickMs, &sleepInterval);
+  struct timespec sleepTime;
+  msToTs(swArgs->tickMs, &sleepTime);
 
   struct timespec elapsed;
   double elapsedTime;
@@ -110,9 +112,9 @@ static void *stopwatchThread(void *arg) {
 
     // first lines should be the stats
     moveCursor(1, 1);
-    hideCursor();
+    eraseLine();
 
-    printf("%sTime taken: %.1lfs\n", ERASE_LINE, elapsedTime);
+    printf(timeFmt, elapsedTime);
     displayTypingStats(&tStats);
     fflush(stdout);
 
@@ -120,7 +122,7 @@ static void *stopwatchThread(void *arg) {
     funlockfile(stdout);
 
     // sleep for a tick
-    nanosleep(&sleepInterval, NULL);
+    nanosleep(&sleepTime, NULL);
     ticks++;
 
     // time to recalculate
