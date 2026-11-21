@@ -30,10 +30,11 @@ struct TypingStats {
 };
 
 struct TypingInfo {
-  int textLen;
-  int currPage;
   char *userInput;
   char *text;
+  size_t textLen;
+  int currPage;
+  int pageSize;
   char *page;
   CharState *charStates;
 };
@@ -41,7 +42,7 @@ struct TypingInfo {
 struct DisplayInfo {
   int textOffset;
   int pages;
-  int *pageOffsets;
+  size_t *pageOffsets;
   int rows;
   int cols;
 };
@@ -53,15 +54,15 @@ void setCheating(void);
 bool isCheating(void);
 void handleCheat(void);
 const char *getCharColor(CharState charState);
-void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
-char *getPage(const struct TypingInfo *typing, const struct DisplayInfo *disp);
+size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
+void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp);
 int getPageSize(const struct TypingInfo *typing,
                 const struct DisplayInfo *disp);
-void updateDisplay(int pos, const struct TypingInfo *typing,
+void updateDisplay(size_t pos, const struct TypingInfo *typing,
                    const struct DisplayInfo *disp);
 void displayPageInfo(const struct TypingInfo *typing,
                      const struct DisplayInfo *disp);
-void displayInput(int pos, const struct TypingInfo *typing,
+void displayInput(size_t pos, const struct TypingInfo *typing,
                   const struct DisplayInfo *disp);
 void displayTypingStats(const struct TypingStats *tStats);
 void calculateTypingStats(const struct UserStats *userStats,

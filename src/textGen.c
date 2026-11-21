@@ -117,25 +117,13 @@ size_t appendStr(char **str, size_t size, char *add) {
   size_t appendLen = strlen(add);
   *str = realloc(*str, sizeof(char) * (size + appendLen + 1));
 
-  // copy {add} to the (original) end of {str}
+  // copy {add} to the end of {str}
   memcpy(*str + size, add, sizeof(char) * appendLen);
 
   return size + appendLen;
 }
 
-// basically just get how many non-newline characters there are
-size_t allValidChars(char *text) {
-  size_t size = strlen(text);
-
-  // advance pointer to iterate through text
-  while (*text != '\0') {
-    if (*text == '\n')
-      size--;
-    text++;
-  }
-
-  return size;
-}
-
 // just a random number within a range
-int randRange(int min, int max) { return min + rand() % (max - min + 1); }
+size_t randRange(size_t min, size_t max) {
+  return min + rand() % (max - min + 1);
+}

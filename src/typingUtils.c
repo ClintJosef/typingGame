@@ -47,14 +47,18 @@ const char *getCharColor(CharState charState) {
   }
 }
 
-void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
+// calculates page offsets based on window size and newline characters
+// returns the count of non-newline characters
+size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
   int pagePos = 0;
   int currPage = 1;
   int pageSize = disp->cols * (disp->rows - disp->textOffset);
   // offset of each page in the text
   // page 0 with offset of 0
-  int *pageOffsets = calloc(1, sizeof(int));
-  int i = 0;
+  size_t *pageOffsets = calloc(1, sizeof(size_t));
+
+  size_t i = 0;
+  size_t charCount = 0;
 
   while (i < typing->textLen) {
     // a row is winSize.cols long.
@@ -65,13 +69,15 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
       pagePos += disp->cols - (pagePos % disp->cols);
 
     // normal char
-    else
+    else {
       pagePos++;
+      charCount++;
+    }
 
     i++;
     // crossing a page
     if (pagePos >= pageSize) {
-      pageOffsets = realloc(pageOffsets, (currPage + 1) * sizeof(int));
+      pageOffsets = realloc(pageOffsets, (currPage + 1) * sizeof(size_t));
       pageOffsets[currPage++] = i;
       pagePos %= pageSize;
     }
@@ -79,31 +85,32 @@ void getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
   // currPage always 1 more by the end of the loop
   disp->pages = currPage - 1;
   disp->pageOffsets = pageOffsets;
+
+  return charCount;
 }
 
-// return page slice of text
-char *getPage(const struct TypingInfo *typing, const struct DisplayInfo *disp) {
-  int offset = disp->pageOffsets[typing->currPage];
-
-  return &typing->text[offset];
-}
-
-// return size of current page
-int getPageSize(const struct TypingInfo *typing,
-                const struct DisplayInfo *disp) {
+// update current page
+void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp) {
   int currPage = typing->currPage;
+  size_t offset = disp->pageOffsets[currPage];
+  typing->page = &typing->text[offset];
 
-  // only one page -> just the whole text
+  // only one page -> just the whole text length
   if (disp->pages < 1)
-    return typing->textLen;
+    typing->pageSize = typing->textLen;
+
+  // last page -> start of this page up to the end of the text
   else if (currPage == disp->pages)
-    return typing->textLen - disp->pageOffsets[currPage];
+    typing->pageSize = typing->textLen - disp->pageOffsets[currPage];
+
+  // between 1 and {pages} -> start of this page up to the next
   else
-    return disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
+    typing->pageSize =
+        disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
 }
 
 // display all text-related stuff
-void updateDisplay(int pos, const struct TypingInfo *typing,
+void updateDisplay(size_t pos, const struct TypingInfo *typing,
                    const struct DisplayInfo *disp) {
   moveCursor(disp->textOffset - 1, 1);
   if (disp->pages >= 1)
@@ -111,17 +118,17 @@ void updateDisplay(int pos, const struct TypingInfo *typing,
   displayInput(pos, typing, disp);
 }
 
-// colorizes each character based their status
+// colorizes each character based their typing state
 // does not write past the screen
-void displayInput(int pos, const struct TypingInfo *typing,
+void displayInput(size_t pos, const struct TypingInfo *typing,
                   const struct DisplayInfo *disp) {
   // assuming getPage was called
   char *text = typing->page;
   int currPage = typing->currPage;
-  int pageSize = getPageSize(typing, disp);
-  int userOffset = disp->pageOffsets[currPage];
+  int pageSize = typing->pageSize;
+  size_t userOffset = disp->pageOffsets[currPage];
 
-  int userPos;
+  size_t userPos;
   bool atCursor, untyped, covered;
 
   // skip trailing newlines

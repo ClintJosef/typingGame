@@ -68,8 +68,8 @@ int startGame(char *text, int textOffset) {
                                   .userInput = input,
                                   .text = text,
                                   .charStates = charStates};
-  getPages(&typingInfo, &disp);
-  typingInfo.page = getPage(&typingInfo, &disp);
+  size_t validChars = getPages(&typingInfo, &disp);
+  getPage(&typingInfo, &disp);
 
   // intial text (lock stdout from stopwatch before writing)
   flockfile(stdout);
@@ -77,16 +77,14 @@ int startGame(char *text, int textOffset) {
   fflush(stdout);
   funlockfile(stdout);
 
-  int i = 0;
-  int pageOffset = 0;
-  int pageSize = getPageSize(&typingInfo, &disp);
+  size_t i = 0;
+  size_t pageOffset = 0;
   int *pagePositions = calloc(disp.pages, sizeof(int));
 
   char c;
   bool isNextPage, isPrevPage, isBackspace, isPrintable;
-  size_t winReq = allValidChars(text);
 
-  while (userStats.correct < winReq) {
+  while (userStats.correct < validChars) {
     if (pollChar(&c) == 1)
       continue;
 
@@ -105,8 +103,7 @@ int startGame(char *text, int textOffset) {
 
       int inc = isNextPage ? 1 : -1;
       typingInfo.currPage = wrap(typingInfo.currPage + inc, 0, disp.pages);
-      typingInfo.page = getPage(&typingInfo, &disp);
-      pageSize = getPageSize(&typingInfo, &disp);
+      getPage(&typingInfo, &disp);
 
       // restore cursor position
       i = pageOffset = disp.pageOffsets[typingInfo.currPage];
@@ -134,7 +131,7 @@ int startGame(char *text, int textOffset) {
     }
 
     // can be printed and within page
-    else if (isPrintable && i - pageOffset < pageSize) {
+    else if (isPrintable && i - pageOffset < typingInfo.pageSize) {
       // match chars
       if (c == text[i]) {
         charStates[i] = CORRECT;

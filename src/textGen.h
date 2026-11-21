@@ -20,8 +20,7 @@ struct TextSize {
 char *generateText(const struct TextSize *tsz);
 char *randomWord(char *words, const struct WordsInfo *wi);
 void getWordsInfo(char *words, struct WordsInfo *wi);
-int randRange(int min, int max);
-size_t allValidChars(char *text);
 size_t appendStr(char **text, size_t size, char *add);
+size_t randRange(size_t min, size_t max);
 
 #endif
