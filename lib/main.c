@@ -11,8 +11,8 @@
 #include <termios.h>
 #include <unistd.h>
 
-void startGame(char *text, int textOffset, int pollMs);
-static int clamp(int a, int min, int max);
+int startGame(char *text, int textOffset);
+static int wrap(int a, int min, int max);
 
 int main(int argc, char *argv[]) {
   int cheatThreshold = 800;
@@ -29,22 +29,31 @@ int main(int argc, char *argv[]) {
       .maxWordSntn = 6,
   };
 
-  int pollMs = 100;
-
+  // setup
   setCheatThreshold(cheatThreshold);
   srand(time(NULL));
   char *text = parseArgs(argc, argv, &defaultTsz);
   init();
 
+  // game itself
   startStopwatch(tickMs, statsTicks);
-  startGame(text, textOffset, pollMs);
+  int result = startGame(text, textOffset);
 
+  // cleanup
   killStopWatch();
+  if (result)
+    handleCheat();
+  else {
+    printf("\nDone!\n");
+    fflush(stdout);
+    sleep(1);
+  }
   cleanup();
 }
 
 // main loop
-void startGame(char *text, int textOffset, int pollMs) {
+// return 0 if user won normally, 1 if the user cheated
+int startGame(char *text, int textOffset) {
   // lotta game info
   int size = strlen(text);
   char *input = calloc(size + 1, sizeof(char));
@@ -77,9 +86,8 @@ void startGame(char *text, int textOffset, int pollMs) {
   bool isNextPage, isPrevPage, isBackspace, isPrintable;
   size_t winReq = allValidChars(text);
 
-  while (userStats.correct < winReq && !isCheating()) {
-    // read from the provided input stream since stdin was "used up"
-    if (pollChar(pollMs, &c) == 1)
+  while (userStats.correct < winReq) {
+    if (pollChar(&c) == 1)
       continue;
 
     // ']' for next and '[' for prev page
@@ -96,7 +104,7 @@ void startGame(char *text, int textOffset, int pollMs) {
       pagePositions[typingInfo.currPage] = i - pageOffset;
 
       int inc = isNextPage ? 1 : -1;
-      typingInfo.currPage = clamp(typingInfo.currPage + inc, 0, disp.pages);
+      typingInfo.currPage = wrap(typingInfo.currPage + inc, 0, disp.pages);
       typingInfo.page = getPage(&typingInfo, &disp);
       pageSize = getPageSize(&typingInfo, &disp);
 
@@ -112,17 +120,16 @@ void startGame(char *text, int textOffset, int pollMs) {
     // backspace
     else if (isBackspace && i - pageOffset > 0) {
       // handle deleting newlines first
-      while (i - pageOffset > 0 && text[i - 1] == '\n') {
+      while (i - pageOffset > 0 && text[i - 1] == '\n')
         i--;
-      }
 
       // normal deletion
       if (i - pageOffset > 0) {
         i--;
-        userStats.typed--;
-        charStates[i] = UNTYPED;
         if (charStates[i] == CORRECT)
           userStats.correct--;
+        userStats.typed--;
+        charStates[i] = UNTYPED;
       }
     }
 
@@ -154,6 +161,8 @@ void startGame(char *text, int textOffset, int pollMs) {
     funlockfile(stdout);
 
     updateStats(&userStats);
+    if (isCheating())
+      break;
   }
 
   // cleanup
@@ -162,21 +171,22 @@ void startGame(char *text, int textOffset, int pollMs) {
   free(charStates);
   free(pagePositions);
 
-  if (isCheating()) {
-    killStopWatch();
-    handleCheat();
-    cleanup();
-  } else {
-    printf("\nDone!");
-    fflush(stdout);
-    sleep(1);
-  }
+  // used to guard copy-paste but since that doesnt work anymore, bots maybe?
+  return isCheating();
 }
 
-static int clamp(int a, int min, int max) {
-  if (a > max)
-    return min;
-  if (a < min)
-    return max;
-  return a;
+// wrap around a range using modulo
+// didnt know where else to put this
+static int wrap(int a, int min, int max) {
+  int range = max - min + 1;
+  /*
+  1. (a - min) % range ensures a > -range
+  2. + range ensures a >= 0
+  3. % range ensures 0 <= a < range
+  4. + min ensures min <= a < range + min
+
+  since range is inclusive of max, this becomes:
+  min <= a <= max
+  */
+  return min + ((a - min) % range + range) % range;
 }

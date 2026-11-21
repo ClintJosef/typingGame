@@ -14,7 +14,7 @@ int disableCanonicalInput(void);
 void init(void);
 void cleanup(void);
 int getTtyFD(void);
-int pollChar(int timeout, char *c);
+int pollChar(char *c);
 FILE *getInputStream(void);
 struct WinSize getWinSize(void);
 

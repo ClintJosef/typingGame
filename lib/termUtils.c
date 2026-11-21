@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <termcap.h>
+#include <term.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -15,7 +15,6 @@ static struct termios old;
 static struct WinSize winSize;
 
 static void updateWinSize(void);
-static void handleResize(int sig);
 static void handleSignal(int sig);
 
 int saveTermState(void) { return tcgetattr(getTtyFD(), &old); }
@@ -27,7 +26,7 @@ int disableCanonicalInput(void) {
   if (tcgetattr(getTtyFD(), &tc) == -1)
     return -1;
 
-  tc.c_cc[VMIN] = 0;
+  tc.c_cc[VMIN] = 1;
   tc.c_cc[VTIME] = 0;
   tc.c_lflag &= ~(ICANON | ECHO);
 
@@ -47,9 +46,7 @@ void init(void) {
   hideCursor();
   eraseScreen();
 
-  // update winSize when necessary
   updateWinSize();
-  signal(SIGWINCH, handleResize);
 
   // in case program doesnt exit normally
   signal(SIGTERM, handleSignal);
@@ -99,25 +96,23 @@ FILE *getInputStream(void) {
   return tty;
 }
 
-// getchar/getc/fgetc block too much
 // polls a single char and then flushes the buffer
-int pollChar(int timeout, char *c) {
+int pollChar(char *c) {
   static struct pollfd pfd = {.fd = -1, .events = POLLIN};
   if (pfd.fd == -1)
     pfd.fd = getTtyFD();
 
-  // block until tty is ready, or {timeout} miliseconds have passed
-  int ready = poll(&pfd, 1, timeout);
-  // not ready || error occurred
+  // block until tty is ready
+  int ready = poll(&pfd, 1, -1);
   if (ready == 0 || ready == -1)
     return 1;
 
-  // read from the now-ready tty
+  // read from the ready tty
   int n = read(pfd.fd, c, 1);
-  // EOF reached || error occurred
   if (n == 0 || n == -1)
     return 1;
 
+  // clear the input buffer
   if (tcflush(getTtyFD(), TCIFLUSH) == -1)
     return 1;
 
@@ -127,19 +122,22 @@ int pollChar(int timeout, char *c) {
 struct WinSize getWinSize(void) { return winSize; }
 
 static void updateWinSize(void) {
-  static char termbuf[1024];
   static char *type = NULL;
   if (type == NULL)
     type = getenv("TERM");
 
-  if (tgetent(termbuf, type) < 0)
-    _exit(EXIT_FAILURE);
+  // load terminal capabilities
+  if (tgetent(NULL, type) < 0)
+    exit(EXIT_FAILURE);
 
+  // query for term width and height
   winSize.rows = tgetnum("li");
   winSize.cols = tgetnum("co");
-}
 
-static void handleResize(int sig) { updateWinSize(); }
+  // if either is not available
+  if (winSize.rows == -1 || winSize.cols == -1)
+    exit(EXIT_FAILURE);
+}
 
 static void handleSignal(int sig) {
   cleanup();
