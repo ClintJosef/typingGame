@@ -33,7 +33,7 @@ CPPFLAGS = -I$(outputDir)
 # Linker flags
 LDFLAGS =
 # Libraries to link with
-LDLIBS = -ltermcap
+LDLIBS =
 
 # In case i have files named after the targets
 .PHONY: all clean compileWords compile
