@@ -14,7 +14,7 @@ Build with make:
 make
 ```
 
-Then just run the game!
+Then run the game!
 
 ```
 build/typingGame
