@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <term.h>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -122,21 +122,12 @@ int pollChar(char *c) {
 struct WinSize getWinSize(void) { return winSize; }
 
 static void updateWinSize(void) {
-  static char *type = NULL;
-  if (type == NULL)
-    type = getenv("TERM");
-
-  // load terminal capabilities
-  if (tgetent(NULL, type) < 0)
+  struct winsize ws;
+  if (ioctl(getTtyFD(), TIOCGWINSZ, &ws) == -1)
     exit(EXIT_FAILURE);
 
-  // query for term width and height
-  winSize.rows = tgetnum("li");
-  winSize.cols = tgetnum("co");
-
-  // if either is not available
-  if (winSize.rows == -1 || winSize.cols == -1)
-    exit(EXIT_FAILURE);
+  winSize.rows = ws.ws_row;
+  winSize.cols = ws.ws_col;
 }
 
 static void handleSignal(int sig) {
