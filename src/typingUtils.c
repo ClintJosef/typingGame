@@ -42,9 +42,8 @@ const char *getCharColor(CharState charState) {
   case CORRECT:
     return COLORS.correct;
     break;
-  case UNTYPED:
+  default:
     return COLORS.untyped;
-    break;
   }
 }
 
@@ -52,11 +51,14 @@ const char *getCharColor(CharState charState) {
 // returns the count of non-newline characters
 size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
   int pagePos = 0;
+  int linePos = 0;
   int currPage = 1;
+  int currLine = 1;
   int pageSize = disp->cols * (disp->rows - disp->textOffset);
-  // offset of each page in the text
-  // page 0 with offset of 0
+  // offset of each page and line in the text
+  // start with offset of 0 for both
   size_t *pageOffsets = calloc(1, sizeof(size_t));
+  size_t *lineOffsets = calloc(1, sizeof(size_t));
 
   size_t i = 0;
   size_t charCount = 0;
@@ -72,7 +74,16 @@ size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
     // normal char
     else {
       pagePos++;
+      linePos++;
       charCount++;
+    }
+
+    // crossing a line
+    if (linePos >= disp->cols || typing->text[i] == '\n') {
+      // also update the line offsets
+      lineOffsets = realloc(lineOffsets, (currLine + 1) * sizeof(size_t));
+      lineOffsets[currLine++] = i + 1;
+      linePos = 0;
     }
 
     // crossing a page
@@ -80,12 +91,15 @@ size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
       pageOffsets = realloc(pageOffsets, (currPage + 1) * sizeof(size_t));
       pageOffsets[currPage++] = i - 1;
       pagePos = 0;
-    } else
-      i++;
+    }
+
+    i++;
   }
-  // currPage always 1 more by the end of the loop
+  // count always 1 more by the end of the loop
   disp->pages = currPage - 1;
+  disp->lines = currLine - 1;
   disp->pageOffsets = pageOffsets;
+  disp->lineOffsets = lineOffsets;
 
   return charCount;
 }
@@ -108,6 +122,37 @@ void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp) {
   else
     typing->pageSize =
         disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
+}
+
+// find line based on index using binary search
+int findLine(size_t pos, const struct DisplayInfo *disp) {
+  if (disp->lines < 2)
+    return pos;
+
+  int left = 0;
+  int right = disp->lines - 1;
+  int mid;
+
+  while (left <= right) {
+    mid = (left + right) / 2;
+
+    // skip lone newlines
+    if (disp->lineOffsets[mid] - disp->lineOffsets[mid + 1] < 2)
+      continue;
+
+    // pos in this line
+    if (disp->lineOffsets[mid] < pos && pos < disp->lineOffsets[mid + 1]) {
+      return mid;
+    }
+
+    // ignore lines pos cannot be in
+    if (disp->lineOffsets[mid] < pos)
+      left = mid + 1;
+    else
+      right = mid - 1;
+  }
+
+  return left;
 }
 
 // display all text-related stuff
@@ -168,9 +213,8 @@ void displayInput(size_t pos, const struct TypingInfo *typing,
 
 void displayPageInfo(const struct TypingInfo *typing,
                      const struct DisplayInfo *disp) {
-  static char fmt[] = "Page (%d/%d): Use '[' or ']' (start: %zu, size: %zu)\n";
-  printf(fmt, typing->currPage + 1, disp->pages + 1,
-         disp->pageOffsets[typing->currPage], typing->pageSize);
+  static char fmt[] = "Page (%d/%d): Use '[' or '] \n";
+  printf(fmt, typing->currPage + 1, disp->pages + 1);
 }
 
 void displayTypingStats(const struct TypingStats *tStats) {

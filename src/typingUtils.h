@@ -42,7 +42,9 @@ struct TypingInfo {
 struct DisplayInfo {
   int textOffset;
   int pages;
+  int lines;
   size_t *pageOffsets;
+  size_t *lineOffsets;
   int rows;
   int cols;
 };
@@ -58,6 +60,7 @@ size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
 void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp);
 int getPageSize(const struct TypingInfo *typing,
                 const struct DisplayInfo *disp);
+int findLine(size_t pos, const struct DisplayInfo *disp);
 void updateDisplay(size_t pos, const struct TypingInfo *typing,
                    const struct DisplayInfo *disp);
 void displayPageInfo(const struct TypingInfo *typing,

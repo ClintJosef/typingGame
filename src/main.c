@@ -78,7 +78,7 @@ int startGame(char *text, int textOffset, int maxBufSize) {
   fflush(stdout);
   funlockfile(stdout);
 
-  size_t i = 0;
+  int i = 0;
   size_t pageOffset = 0;
   int *pagePositions = calloc(disp.pages, sizeof(int));
 
@@ -108,19 +108,37 @@ int startGame(char *text, int textOffset, int maxBufSize) {
     }
 
     // move cursor
-    if (left || right || up || down) {
+    if (left || right) {
       int inc;
-      if (left || right)
-        inc = right ? 1 : -1;
 
-      // up/down kinda work but not quite
-      // since a '\n' in the text just counts as one element
-      else
-        inc = down ? winSize.cols : -winSize.cols;
+      // proceeding newlines are handled automatically
+      if (right)
+        inc = 1;
+      // handle preceeding newlines
+      else {
+        inc = -1;
+        while (text[i + inc] == '\n')
+          inc--;
+      }
 
       i = wrap(i + inc, pageOffset, pageOffset + typingInfo.pageSize - 1);
-      left = right = up = down = false;
+      left = right = false;
+
+    } else if (up || down) {
+      // yes i stored all the line offsets just for this
+      int line = findLine(i, &disp);
+      int col = i - disp.lineOffsets[line];
+
+      // next/prev line with the same column
+      // for some reason has to move to the 2nd last line when going up
+      int inc = down ? 1 : -2;
+      int newLine = wrap(line + inc, 0, disp.lines);
+
+      i = disp.lineOffsets[newLine] + col;
+      i = wrap(i, pageOffset, pageOffset + typingInfo.pageSize - 1);
+      up = down = false;
     }
+
     // navigate pages
     else if ((isNextPage || isPrevPage) && disp.pages >= 1) {
       // save cursor position
@@ -172,7 +190,7 @@ int startGame(char *text, int textOffset, int maxBufSize) {
     }
 
     // handle adding newlines
-    while (!escaped && i < size && text[i] == '\n') {
+    while (i < size && text[i] == '\n') {
       input[i] = '\n';
       i++;
     }
