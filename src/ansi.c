@@ -58,3 +58,22 @@ void saveScreen(void) {
 void restoreScreen(void) {
   write(STDOUT_FILENO, RESTORE_SCREEN, strlen(RESTORE_SCREEN));
 }
+
+// detect if escape sequence was inputted (arrow keys etc.)
+// check if ESC (27) and '[' (91) were pressed first
+// this only works if called sequentially
+bool isEscaped(char c) {
+  static bool escaped = false;
+  static bool bracket = false;
+
+  // ESC and '[' pressed -> next call returns true
+  if (escaped && c == 91)
+    bracket = true;
+  else if (bracket) {
+    bracket = false;
+    return true;
+  }
+
+  escaped = c == 27;
+  return escaped;
+}

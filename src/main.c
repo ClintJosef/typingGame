@@ -11,11 +11,12 @@
 #include <termios.h>
 #include <unistd.h>
 
-int startGame(char *text, int textOffset);
+int startGame(char *text, int textOffset, int maxBufSize);
 static int wrap(int a, int min, int max);
 
 int main(int argc, char *argv[]) {
   int cheatThreshold = 800;
+  int maxBufSize = 4;
 
   long long tickMs = 1000 / 60;
   int statsTicks = 30;
@@ -37,7 +38,7 @@ int main(int argc, char *argv[]) {
 
   // game itself
   startStopwatch(tickMs, statsTicks);
-  int result = startGame(text, textOffset);
+  int result = startGame(text, textOffset, maxBufSize);
 
   // cleanup
   killStopWatch();
@@ -53,7 +54,7 @@ int main(int argc, char *argv[]) {
 
 // main loop
 // return 0 if user won normally, 1 if the user cheated
-int startGame(char *text, int textOffset) {
+int startGame(char *text, int textOffset, int maxBufSize) {
   // lotta game info
   int size = strlen(text);
   char *input = calloc(size + 1, sizeof(char));
@@ -82,22 +83,46 @@ int startGame(char *text, int textOffset) {
   int *pagePositions = calloc(disp.pages, sizeof(int));
 
   char c;
+  bool escaped, left, right, up, down;
   bool isNextPage, isPrevPage, isBackspace, isPrintable;
 
   while (userStats.correct < validChars) {
-    if (pollChar(&c) == 1)
+    if (pollChar(&c, maxBufSize) == 1)
       continue;
 
     // ']' for next and '[' for prev page
-    isNextPage = c == 93;
-    isPrevPage = c == 91;
-    isBackspace = c == 127 || c == 8;
-    isPrintable = isprint(c);
+    isBackspace = (c == 127 || c == 8);
+    isNextPage = c == 93 && !escaped;
+    isPrevPage = c == 91 && !escaped;
+    isPrintable = isprint(c) && !escaped;
 
-    flockfile(stdout);
+    // catch arrow keys
+    escaped = isEscaped(c);
+    if (escaped) {
+      // left = 'D' (68), right = 'C' (67)
+      // up = 'A' (65), down = 'B' (66)
+      left = c == 68;
+      right = c == 67;
+      up = c == 65;
+      down = c == 66;
+    }
 
+    // move cursor
+    if (left || right || up || down) {
+      int inc;
+      if (left || right)
+        inc = right ? 1 : -1;
+
+      // up/down kinda work but not quite
+      // since a '\n' in the text just counts as one element
+      else
+        inc = down ? winSize.cols : -winSize.cols;
+
+      i = wrap(i + inc, pageOffset, pageOffset + typingInfo.pageSize - 1);
+      left = right = up = down = false;
+    }
     // navigate pages
-    if ((isNextPage || isPrevPage) && disp.pages >= 1) {
+    else if ((isNextPage || isPrevPage) && disp.pages >= 1) {
       // save cursor position
       pagePositions[typingInfo.currPage] = i - pageOffset;
 
@@ -110,8 +135,10 @@ int startGame(char *text, int textOffset) {
       i += pagePositions[typingInfo.currPage];
 
       // erase current page from the screen
+      flockfile(stdout);
       moveCursor(textOffset, 1);
       eraseCurToEnd();
+      funlockfile(stdout);
     }
 
     // backspace
@@ -145,14 +172,12 @@ int startGame(char *text, int textOffset) {
     }
 
     // handle adding newlines
-    while (i < size && text[i] == '\n') {
+    while (!escaped && i < size && text[i] == '\n') {
       input[i] = '\n';
       i++;
     }
 
-    // always gotta have the null byte
-    input[i] = '\0';
-
+    flockfile(stdout);
     updateDisplay(i, &typingInfo, &disp);
     fflush(stdout);
     funlockfile(stdout);

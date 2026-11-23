@@ -1,6 +1,8 @@
 #ifndef ANSI_H
 #define ANSI_H
 
+#include <stdbool.h>
+
 extern const char RESET[];
 extern const char BOLD[];
 extern const char FAINT[];
@@ -28,5 +30,6 @@ void eraseScreen(void);
 void eraseCurToEnd(void);
 void eraseLine(void);
 void resetModes(void);
+bool isEscaped(char c);
 
 #endif

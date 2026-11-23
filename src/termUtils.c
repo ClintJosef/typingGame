@@ -97,8 +97,11 @@ FILE *getInputStream(void) {
 }
 
 // polls a single char and then flushes the buffer
-int pollChar(char *c) {
+// dont call this with different buffer sizes
+int pollChar(char *c, int maxBufSize) {
+  static int count = 0;
   static struct pollfd pfd = {.fd = -1, .events = POLLIN};
+
   if (pfd.fd == -1)
     pfd.fd = getTtyFD();
 
@@ -112,9 +115,12 @@ int pollChar(char *c) {
   if (n == 0 || n == -1)
     return 1;
 
-  // clear the input buffer
-  if (tcflush(getTtyFD(), TCIFLUSH) == -1)
-    return 1;
+  // clear the input buffer (paste guard)
+  if (count++ > maxBufSize) {
+    count = 0;
+    if (tcflush(getTtyFD(), TCIFLUSH) == -1)
+      return 1;
+  }
 
   return 0;
 }

@@ -75,13 +75,13 @@ size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
       charCount++;
     }
 
-    i++;
     // crossing a page
     if (pagePos >= pageSize) {
       pageOffsets = realloc(pageOffsets, (currPage + 1) * sizeof(size_t));
-      pageOffsets[currPage++] = i;
-      pagePos %= pageSize;
-    }
+      pageOffsets[currPage++] = i - 1;
+      pagePos = 0;
+    } else
+      i++;
   }
   // currPage always 1 more by the end of the loop
   disp->pages = currPage - 1;
@@ -168,8 +168,9 @@ void displayInput(size_t pos, const struct TypingInfo *typing,
 
 void displayPageInfo(const struct TypingInfo *typing,
                      const struct DisplayInfo *disp) {
-  static char fmt[] = "Page (%d/%d): Use '[' or ']'\n";
-  printf(fmt, typing->currPage + 1, disp->pages + 1);
+  static char fmt[] = "Page (%d/%d): Use '[' or ']' (start: %zu, size: %zu)\n";
+  printf(fmt, typing->currPage + 1, disp->pages + 1,
+         disp->pageOffsets[typing->currPage], typing->pageSize);
 }
 
 void displayTypingStats(const struct TypingStats *tStats) {
