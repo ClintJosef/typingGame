@@ -70,10 +70,13 @@ char *readStdin(void) {
   char *buffer = calloc(capac, sizeof(char));
 
   // read n bytes until nothing can be read
+  // append new data to the end (buffer + len)
+  // and read as much as can fit (capac - len)
   size_t n;
-  while ((n = fread(buffer, sizeof(char), capac - len - 1, stdin)) > 0) {
-    // dynamically resize
+  while ((n = fread(buffer + len, sizeof(char), capac - len, stdin)) > 0) {
     len += n;
+
+    // dynamically resize
     if (len >= capac) {
       capac *= 2;
       buffer = realloc(buffer, sizeof(char) * capac);
