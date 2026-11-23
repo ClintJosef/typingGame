@@ -5,17 +5,15 @@
 
 // read stdin first, if its empty then parse the args
 char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
-  if (argc < 2) {
-    if (!isatty(STDIN_FILENO)) {
-      // try to read from stdin
-      char *input = readStdin();
-      if (input != NULL)
-        return input;
-    }
-
-    // no input/couldnt read from stdin -> generate default text
-    return generateText(defaultTsz);
+  if (!isatty(STDIN_FILENO)) {
+    // try to read from stdin
+    char *input = readStdin();
+    if (input != NULL)
+      return input;
   }
+
+  // copy of the defaults
+  struct TextSize tsz = *defaultTsz;
 
   // all the options
   // the number is just its "id" returned by getopt_long_only etc.
@@ -30,9 +28,6 @@ char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
       {"h", no_argument, NULL, 'h'},
       {0, 0, 0, 0},
   };
-
-  // copy of the defaults
-  struct TextSize tsz = *defaultTsz;
 
   int opt;
   // loop through every option given
