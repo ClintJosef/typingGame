@@ -61,6 +61,7 @@ void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp);
 int getPageSize(const struct TypingInfo *typing,
                 const struct DisplayInfo *disp);
 int findLine(size_t pos, const struct DisplayInfo *disp);
+int getLineLength(int line, const struct DisplayInfo *disp);
 void updateDisplay(size_t pos, const struct TypingInfo *typing,
                    const struct DisplayInfo *disp);
 void displayPageInfo(const struct TypingInfo *typing,

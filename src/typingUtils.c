@@ -155,6 +155,17 @@ int findLine(size_t pos, const struct DisplayInfo *disp) {
   return left;
 }
 
+int getLineLength(int line, const struct DisplayInfo *disp) {
+  if (disp->lines < 1)
+    return 0;
+  if (disp->lines < 2)
+    return disp->lineOffsets[1];
+  if (line == disp->lines)
+    return disp->lineOffsets[line] - disp->lineOffsets[line - 1];
+
+  return disp->lineOffsets[line + 1] - disp->lineOffsets[line];
+}
+
 // display all text-related stuff
 void updateDisplay(size_t pos, const struct TypingInfo *typing,
                    const struct DisplayInfo *disp) {

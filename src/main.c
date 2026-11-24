@@ -78,9 +78,13 @@ int startGame(char *text, int textOffset, int maxBufSize) {
   fflush(stdout);
   funlockfile(stdout);
 
-  int i = 0;
+  size_t i = 0;
   size_t pageOffset = 0;
   int *pagePositions = calloc(disp.pages, sizeof(int));
+
+  int savedCol = 0;
+  int currCol = 0;
+  int currLine = 0;
 
   char c;
   bool escaped, left, right, up, down;
@@ -123,19 +127,31 @@ int startGame(char *text, int textOffset, int maxBufSize) {
 
       i = wrap(i + inc, pageOffset, pageOffset + typingInfo.pageSize - 1);
       left = right = false;
+    }
+    // yes i stored all the line offsets just for this
+    else if (up || down) {
+      // same as with right/left
+      int inc;
+      if (down)
+        inc = 1;
+      else {
+        inc = -1;
+        // skip preceding newlines (again)
+        while (getLineLength(currLine + inc, &disp) < 2)
+          inc--;
+      }
 
-    } else if (up || down) {
-      // yes i stored all the line offsets just for this
-      int line = findLine(i, &disp);
-      int col = i - disp.lineOffsets[line];
+      // move to the saved column if the line is long enough
+      // otherwise just move to the end of that line
+      int newLine = wrap(currLine + inc, 0, disp.lines + 1);
+      int lineLen = getLineLength(newLine, &disp);
+      if (lineLen < currCol && lineLen > 1) {
+        savedCol = currCol;
+        currCol = lineLen - 2;
+      } else if (savedCol != 0 && currCol != 0)
+        currCol = savedCol;
 
-      // next/prev line with the same column
-      // for some reason has to move to the 2nd last line when going up
-      int inc = down ? 1 : -2;
-      int newLine = wrap(line + inc, 0, disp.lines);
-
-      i = disp.lineOffsets[newLine] + col;
-      i = wrap(i, pageOffset, pageOffset + typingInfo.pageSize - 1);
+      i = disp.lineOffsets[newLine] + currCol;
       up = down = false;
     }
 
@@ -194,6 +210,12 @@ int startGame(char *text, int textOffset, int maxBufSize) {
       input[i] = '\n';
       i++;
     }
+
+    // update user position
+    currLine = findLine(i, &disp);
+    currCol = i - disp.lineOffsets[currLine];
+    if (getLineLength(currLine, &disp) > savedCol)
+      savedCol = currCol;
 
     flockfile(stdout);
     updateDisplay(i, &typingInfo, &disp);
