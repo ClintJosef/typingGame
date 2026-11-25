@@ -1,5 +1,6 @@
 #include "ansi.h"
 #include "args.h"
+#include "movement.h"
 #include "stopwatch.h"
 #include "termUtils.h"
 #include "textGen.h"
@@ -12,7 +13,6 @@
 #include <unistd.h>
 
 int startGame(char *text, int textOffset, int maxBufSize);
-static int wrap(int a, int min, int max);
 
 int main(int argc, char *argv[]) {
   int cheatThreshold = 800;
@@ -64,27 +64,23 @@ int startGame(char *text, int textOffset, int maxBufSize) {
   struct DisplayInfo disp = {
       .textOffset = textOffset + 1, .rows = winSize.rows, .cols = winSize.cols};
   struct UserStats userStats = {.typed = 0, .correct = 0, .textLen = size};
-  struct TypingInfo typingInfo = {.textLen = size,
-                                  .currPage = 0,
-                                  .userInput = input,
-                                  .text = text,
-                                  .charStates = charStates};
-  size_t validChars = getPages(&typingInfo, &disp);
-  getPage(&typingInfo, &disp);
+  struct TypingInfo typing = {.textLen = size,
+                              .currPage = 0,
+                              .userInput = input,
+                              .text = text,
+                              .charStates = charStates};
+  size_t validChars = getPages(&typing, &disp);
+  getPage(&typing, &disp);
 
   // intial text (lock stdout from stopwatch before writing)
   flockfile(stdout);
-  updateDisplay(0, &typingInfo, &disp);
+  updateDisplay(0, &typing, &disp);
   fflush(stdout);
   funlockfile(stdout);
 
   size_t i = 0;
   size_t pageOffset = 0;
   int *pagePositions = calloc(disp.pages, sizeof(int));
-
-  int savedCol = 0;
-  int currCol = 0;
-  int currLine = 0;
 
   char c;
   bool escaped, left, right, up, down;
@@ -95,7 +91,7 @@ int startGame(char *text, int textOffset, int maxBufSize) {
       continue;
 
     // ']' for next and '[' for prev page
-    isBackspace = (c == 127 || c == 8);
+    isBackspace = c == 127 || c == 8;
     isNextPage = c == 93 && !escaped;
     isPrevPage = c == 91 && !escaped;
     isPrintable = isprint(c) && !escaped;
@@ -113,60 +109,31 @@ int startGame(char *text, int textOffset, int maxBufSize) {
 
     // move cursor
     if (left || right) {
-      int inc;
+      int dir = right ? 1 : -1;
+      i = moveX(i, dir, &typing, &disp);
 
-      // proceeding newlines are handled automatically
-      if (right)
-        inc = 1;
-      // handle preceeding newlines
-      else {
-        inc = -1;
-        while (text[i + inc] == '\n')
-          inc--;
-      }
-
-      i = wrap(i + inc, pageOffset, pageOffset + typingInfo.pageSize - 1);
       left = right = false;
     }
-    // yes i stored all the line offsets just for this
+
     else if (up || down) {
-      // same as with right/left
-      int inc;
-      if (down)
-        inc = 1;
-      else {
-        inc = -1;
-        // skip preceding newlines (again)
-        while (getLineLength(currLine + inc, &disp) < 2)
-          inc--;
-      }
+      int dir = down ? 1 : -1;
+      i = moveY(i, dir, &typing, &disp);
 
-      // move to the saved column if the line is long enough
-      // otherwise just move to the end of that line
-      int newLine = wrap(currLine + inc, 0, disp.lines + 1);
-      int lineLen = getLineLength(newLine, &disp);
-      if (lineLen < currCol && lineLen > 1) {
-        savedCol = currCol;
-        currCol = lineLen - 2;
-      } else if (savedCol != 0 && currCol != 0)
-        currCol = savedCol;
-
-      i = disp.lineOffsets[newLine] + currCol;
       up = down = false;
     }
 
     // navigate pages
     else if ((isNextPage || isPrevPage) && disp.pages >= 1) {
       // save cursor position
-      pagePositions[typingInfo.currPage] = i - pageOffset;
+      pagePositions[typing.currPage] = i - pageOffset;
 
       int inc = isNextPage ? 1 : -1;
-      typingInfo.currPage = wrap(typingInfo.currPage + inc, 0, disp.pages);
-      getPage(&typingInfo, &disp);
+      typing.currPage = wrap(typing.currPage + inc, 0, disp.pages);
+      getPage(&typing, &disp);
 
       // restore cursor position
-      i = pageOffset = disp.pageOffsets[typingInfo.currPage];
-      i += pagePositions[typingInfo.currPage];
+      i = pageOffset = disp.pageOffsets[typing.currPage];
+      i += pagePositions[typing.currPage];
 
       // erase current page from the screen
       flockfile(stdout);
@@ -192,7 +159,7 @@ int startGame(char *text, int textOffset, int maxBufSize) {
     }
 
     // can be printed and within page
-    else if (isPrintable && i - pageOffset < typingInfo.pageSize) {
+    else if (isPrintable && i - pageOffset < typing.pageSize) {
       // match chars
       if (c == text[i]) {
         charStates[i] = CORRECT;
@@ -211,14 +178,8 @@ int startGame(char *text, int textOffset, int maxBufSize) {
       i++;
     }
 
-    // update user position
-    currLine = findLine(i, &disp);
-    currCol = i - disp.lineOffsets[currLine];
-    if (getLineLength(currLine, &disp) > savedCol)
-      savedCol = currCol;
-
     flockfile(stdout);
-    updateDisplay(i, &typingInfo, &disp);
+    updateDisplay(i, &typing, &disp);
     fflush(stdout);
     funlockfile(stdout);
 
@@ -235,20 +196,4 @@ int startGame(char *text, int textOffset, int maxBufSize) {
 
   // used to guard copy-paste but since that doesnt work anymore, bots maybe?
   return isCheating();
-}
-
-// wrap around a range using modulo
-// didnt know where else to put this
-static int wrap(int a, int min, int max) {
-  int range = max - min + 1;
-  /*
-  1. (a - min) % range ensures a > -range
-  2. + range ensures a >= 0
-  3. % range ensures 0 <= a < range
-  4. + min ensures min <= a < range + min
-
-  since range is inclusive of max, this becomes:
-  min <= a <= max
-  */
-  return min + ((a - min) % range + range) % range;
 }
