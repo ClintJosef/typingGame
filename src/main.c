@@ -187,8 +187,9 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
   free(input);
   free(charStates);
   free(pagePositions);
+  free(disp.pageOffsets);
+  free(disp.lineOffsets);
 
-  // used to guard copy-paste but since that doesnt work anymore, bots maybe?
   return isCheating();
 }
 
@@ -199,9 +200,7 @@ void endGame(bool cheated) {
     moveCursor(1, 1);
   }
 
-  char *msg = cheated ? "You dirty cheater." : "\nDone!";
-  printf("%s\n", msg);
-
+  printf("%s\n", cheated ? "You dirty cheater." : "\nDone!");
   fflush(stdout);
   sleep(2);
 }
