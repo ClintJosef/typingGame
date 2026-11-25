@@ -108,18 +108,16 @@ int startGame(char *text, int textOffset, int maxBufSize) {
     }
 
     // move cursor
-    if (left || right) {
-      int dir = right ? 1 : -1;
-      i = moveX(i, dir, &typing, &disp);
+    if (left || right || up || down) {
+      // woah function pointer
+      size_t (*moveFunc)(size_t, int, const struct TypingInfo *,
+                         const struct DisplayInfo *) =
+          left || right ? moveX : moveY;
 
-      left = right = false;
-    }
+      int dir = right || down ? 1 : -1;
+      i = moveFunc(i, dir, &typing, &disp);
 
-    else if (up || down) {
-      int dir = down ? 1 : -1;
-      i = moveY(i, dir, &typing, &disp);
-
-      up = down = false;
+      left = right = up = down = false;
     }
 
     // navigate pages
