@@ -54,7 +54,7 @@ extern const struct Colors COLORS;
 void setCheatThreshold(int threshold);
 void setCheating(void);
 bool isCheating(void);
-void handleCheat(void);
+
 const char *getCharColor(CharState charState);
 size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
 void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp);
@@ -62,6 +62,7 @@ int getPageSize(const struct TypingInfo *typing,
                 const struct DisplayInfo *disp);
 int findLine(size_t pos, const struct DisplayInfo *disp);
 int getLineLength(int line, size_t textLen, const struct DisplayInfo *disp);
+
 void updateDisplay(size_t pos, const struct TypingInfo *typing,
                    const struct DisplayInfo *disp);
 void displayPageInfo(const struct TypingInfo *typing,
@@ -69,6 +70,7 @@ void displayPageInfo(const struct TypingInfo *typing,
 void displayInput(size_t pos, const struct TypingInfo *typing,
                   const struct DisplayInfo *disp);
 void displayTypingStats(const struct TypingStats *tStats);
+
 void calculateTypingStats(const struct UserStats *userStats,
                           struct TypingStats *tStats, double elapsedTime);
 

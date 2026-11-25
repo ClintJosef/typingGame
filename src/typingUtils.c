@@ -23,16 +23,6 @@ static _Atomic(bool) cheating = false;
 void setCheatThreshold(int threshold) { cheatThreshold = threshold; }
 void setCheating(void) { cheating = true; }
 bool isCheating(void) { return cheating; }
-void handleCheat(void) {
-  // clear screen
-  eraseScreen();
-  moveCursor(1, 1);
-
-  // the line
-  printf("You dirty cheater.");
-  fflush(stdout);
-  sleep(2);
-}
 
 const char *getCharColor(CharState charState) {
   switch (charState) {

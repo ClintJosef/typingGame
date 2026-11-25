@@ -6,13 +6,15 @@
 #include "textGen.h"
 #include "typingUtils.h"
 #include <ctype.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
 
-int startGame(char *text, int textOffset, int maxBufSize);
+bool startGame(char *text, int textOffset, int maxBufSize);
+void endGame(bool cheated);
 
 int main(int argc, char *argv[]) {
   int cheatThreshold = 800;
@@ -42,19 +44,13 @@ int main(int argc, char *argv[]) {
 
   // cleanup
   killStopWatch();
-  if (result)
-    handleCheat();
-  else {
-    printf("\nDone!\n");
-    fflush(stdout);
-    sleep(1);
-  }
+  endGame(result);
   cleanup();
 }
 
 // main loop
-// return 0 if user won normally, 1 if the user cheated
-int startGame(char *text, int textOffset, int maxBufSize) {
+// return 1 (true) if user cheated
+bool startGame(char *text, int textOffset, int maxBufSize) {
   // lotta game info
   int size = strlen(text);
   char *input = calloc(size + 1, sizeof(char));
@@ -194,4 +190,18 @@ int startGame(char *text, int textOffset, int maxBufSize) {
 
   // used to guard copy-paste but since that doesnt work anymore, bots maybe?
   return isCheating();
+}
+
+void endGame(bool cheated) {
+  // clear screen for cheater
+  if (cheated) {
+    eraseScreen();
+    moveCursor(1, 1);
+  }
+
+  char *msg = cheated ? "You dirty cheater." : "\nDone!";
+  printf("%s\n", msg);
+
+  fflush(stdout);
+  sleep(2);
 }
