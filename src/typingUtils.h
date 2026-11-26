@@ -43,6 +43,8 @@ struct DisplayInfo {
   int textOffset;
   int pages;
   int lines;
+  int pageHeight;
+  int *pageLines;
   size_t *pageOffsets;
   size_t *lineOffsets;
   int rows;

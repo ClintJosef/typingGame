@@ -104,7 +104,7 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
     }
 
     // move cursor
-    if (left || right || up || down) {
+    if (escaped && (left || right || up || down)) {
       // woah function pointer
       size_t (*moveFunc)(size_t, int, const struct TypingInfo *,
                          const struct DisplayInfo *) =
@@ -114,6 +114,7 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
       i = moveFunc(i, dir, &typing, &disp);
 
       left = right = up = down = false;
+      c = 0;
     }
 
     // navigate pages
@@ -139,8 +140,9 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
     // backspace
     else if (isBackspace && i - pageOffset > 0) {
       // handle deleting newlines first
-      while (i - pageOffset > 0 && text[i - 1] == '\n')
+      while (i - pageOffset > 0 && text[i - 1] == '\n') {
         i--;
+      }
 
       // normal deletion
       if (i - pageOffset > 0) {
@@ -170,7 +172,9 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
     while (i < size && text[i] == '\n') {
       input[i] = '\n';
       i++;
+       
     }
+     
 
     flockfile(stdout);
     updateDisplay(i, &typing, &disp);

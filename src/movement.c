@@ -4,29 +4,40 @@
 size_t moveY(size_t pos, int dir, const struct TypingInfo *typing,
              const struct DisplayInfo *disp) {
   static int savedCol = 0;
+  static int currPage = 0;
 
-  // get user position
-  int line = findLine(pos, disp);
+  size_t textLen = typing->textLen;
+
+  // line range of the current page
+  int page = typing->currPage;
+  int firstLine = findLine(disp->pageOffsets[page], disp);
+  int lastLine = firstLine + disp->pageLines[page];
+
+  // user position
+  size_t line = findLine(pos, disp);
   int col = pos - disp->lineOffsets[line];
-  if (getLineLength(line, typing->textLen, disp) > savedCol)
+  int lineLen = getLineLength(line, textLen, disp);
+  if (lineLen > savedCol)
     savedCol = col;
 
-  if (dir < 0 && line > 0 && line < disp->lines) {
-    // skip trailing newlines (similar to moveX)
-    while (getLineLength(line + dir, typing->textLen, disp) < 2)
-      dir--;
-  }
+  // save column only within the same page
+  if (currPage != page)
+    savedCol = 0;
+  currPage = page;
 
-  // move to the saved column if the line is long enough
-  // otherwise just move to the end of that line
-  int newLine = wrap(line + dir, 0, disp->lines);
-  int lineLen = getLineLength(newLine, typing->textLen, disp);
-  if (lineLen < col && lineLen > 1) {
+  // go to next/prev line thats not just a newline char
+  int newLine = line;
+  lineLen = 0;
+  do {
+    newLine = wrap(newLine + dir, firstLine, lastLine);
+    lineLen = getLineLength(newLine, textLen, disp);
+  } while (lineLen < 2);
+
+  // move to end of line if line is too short, otherwise to savedCol
+  if (lineLen < savedCol) {
     savedCol = col;
-    col = lineLen - 1;
-    while (typing->text[disp->lineOffsets[newLine] + col] == '\n')
-      col--;
-  } else if (col != 0)
+    col = lineLen - 2;
+  } else
     col = savedCol;
 
   return disp->lineOffsets[newLine] + col;

@@ -37,59 +37,70 @@ const char *getCharColor(CharState charState) {
   }
 }
 
-// calculates page offsets based on window size and newline characters
+// basically calculates text metadata (DisplayInfo)
 // returns the count of non-newline characters
 size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
-  int pagePos = 0;
-  int linePos = 0;
-  int currPage = 1;
-  int currLine = 1;
-  int pageSize = disp->cols * (disp->rows - disp->textOffset);
-  // offset of each page and line in the text
-  // start with offset of 0 for both
-  size_t *pageOffsets = calloc(1, sizeof(size_t));
-  size_t *lineOffsets = calloc(1, sizeof(size_t));
+  int pageHeight = disp->rows - disp->textOffset - 1;
+  size_t len = typing->textLen;
+  size_t maxPages = len / pageHeight;
 
-  size_t i = 0;
+  size_t *lineOffsets = calloc(len, sizeof(size_t));
+  size_t *pageOffsets = calloc(maxPages, sizeof(size_t));
+  int *pageLines = calloc(maxPages, sizeof(int));
+
+  // page 0 line 0 at offset of 0
+  // count up from there
+  int pages = 1;
+  int lines = 1;
+  int col = 0;
+
+  // all non-newline chars
   size_t charCount = 0;
 
-  while (i < typing->textLen) {
-    // a row is winSize.cols long.
-    // if the newline char is in the middle of the line, it still advances to
-    // the next row, but only to the first column
-    // so just add winSize.cols minus the cursor's current pos in the line
+  for (size_t i = 0; i < len; i++) {
+    bool eol = false;
+
+    // eol through newline char
     if (typing->text[i] == '\n')
-      pagePos += disp->cols - (pagePos % disp->cols);
-
-    // normal char
+      eol = true;
     else {
-      pagePos++;
-      linePos++;
+      col++;
       charCount++;
+
+      // eol through line wraparound (cols reached)
+      eol = col >= disp->cols;
     }
 
-    // crossing a line
-    if (linePos >= disp->cols || typing->text[i] == '\n') {
-      // also update the line offsets
-      lineOffsets = realloc(lineOffsets, (currLine + 1) * sizeof(size_t));
-      lineOffsets[currLine++] = i + 1;
-      linePos = 0;
-    }
+    // end of line
+    if (eol) {
+      col = 0;
 
-    // crossing a page
-    if (pagePos >= pageSize) {
-      pageOffsets = realloc(pageOffsets, (currPage + 1) * sizeof(size_t));
-      pageOffsets[currPage++] = i - 1;
-      pagePos = 0;
-    }
+      // next line/page start
+      size_t offset = i + 1;
 
-    i++;
+      // next page
+      if (pageLines[pages - 1] >= pageHeight) {
+        pageOffsets[pages] = offset;
+        pageLines[pages] = 0;
+        pages++;
+      }
+      // next line
+      else
+        pageLines[pages - 1]++;
+
+      lines++;
+      lineOffsets[lines - 1] = offset;
+    }
   }
-  // count always 1 more by the end of the loop
-  disp->pages = currPage - 1;
-  disp->lines = currLine - 1;
+
+  // since pages start at page 0, these are both 1 extra by the end of the loop
+  disp->pages = pages - 1;
+  disp->lines = lines - 1;
+
   disp->pageOffsets = pageOffsets;
   disp->lineOffsets = lineOffsets;
+  disp->pageLines = pageLines;
+  disp->pageHeight = pageHeight;
 
   return charCount;
 }
@@ -99,61 +110,49 @@ void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp) {
   int currPage = typing->currPage;
   size_t offset = disp->pageOffsets[currPage];
   typing->page = &typing->text[offset];
+  int pageSize;
 
   // only one page -> just the whole text length
   if (disp->pages < 1)
-    typing->pageSize = typing->textLen;
+    pageSize = typing->textLen;
 
   // last page -> start of this page up to the end of the text
   else if (currPage == disp->pages)
-    typing->pageSize = typing->textLen - disp->pageOffsets[currPage];
+    pageSize = typing->textLen - disp->pageOffsets[currPage];
 
   // between 1 and {pages} -> start of this page up to the next
   else
-    typing->pageSize =
-        disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
+    pageSize = disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
+
+  typing->pageSize = pageSize;
 }
 
 // find line based on index using binary search
+// works because an offset array is already sorted
 int findLine(size_t pos, const struct DisplayInfo *disp) {
-  if (disp->lines < 2)
-    return pos;
-
   int left = 0;
-  int right = disp->lines - 1;
+  int right = disp->lines + 1;
   int mid;
 
   while (left <= right) {
     mid = (left + right) / 2;
 
-    // skip lone newlines
-    if (disp->lineOffsets[mid] - disp->lineOffsets[mid + 1] < 2)
-      continue;
-
-    // pos in this line
-    if (disp->lineOffsets[mid] < pos && pos < disp->lineOffsets[mid + 1]) {
-      return mid;
-    }
-
-    // ignore lines pos cannot be in
-    if (disp->lineOffsets[mid] < pos)
+    if (disp->lineOffsets[mid] <= pos)
       left = mid + 1;
     else
       right = mid - 1;
   }
 
-  return left;
+  // left-1 instead of mid since mid isnt guaranteed to be where
+  // the line offset <= pos when left and right converge
+  return left - 1;
 }
 
 int getLineLength(int line, size_t textLen, const struct DisplayInfo *disp) {
-  if (disp->lines < 1)
-    return 0;
-  if (disp->lines < 2)
-    return disp->lineOffsets[1];
-  if (line == disp->lines)
-    return textLen - disp->lineOffsets[line];
+  size_t start = disp->lineOffsets[line];
+  size_t end = line < disp->lines ? disp->lineOffsets[line + 1] : textLen;
 
-  return disp->lineOffsets[line + 1] - disp->lineOffsets[line];
+  return end - start;
 }
 
 // display all text-related stuff
