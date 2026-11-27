@@ -13,17 +13,17 @@ size_t moveY(size_t pos, int dir, const struct TypingInfo *typing,
   int firstLine = findLine(disp->pageOffsets[page], disp);
   int lastLine = firstLine + disp->pageLines[page];
 
+  // save column only within the same page
+  if (currPage != page)
+    savedCol = 0;
+  currPage = page;
+
   // user position
   size_t line = findLine(pos, disp);
   int col = pos - disp->lineOffsets[line];
   int lineLen = getLineLength(line, textLen, disp);
   if (lineLen > savedCol)
     savedCol = col;
-
-  // save column only within the same page
-  if (currPage != page)
-    savedCol = 0;
-  currPage = page;
 
   // go to next/prev line thats not just a newline char
   int newLine = line;

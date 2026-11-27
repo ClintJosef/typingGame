@@ -114,7 +114,6 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
       i = moveFunc(i, dir, &typing, &disp);
 
       left = right = up = down = false;
-      c = 0;
     }
 
     // navigate pages
@@ -172,9 +171,7 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
     while (i < size && text[i] == '\n') {
       input[i] = '\n';
       i++;
-       
     }
-     
 
     flockfile(stdout);
     updateDisplay(i, &typing, &disp);

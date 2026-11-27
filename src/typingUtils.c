@@ -131,7 +131,7 @@ void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp) {
 // works because an offset array is already sorted
 int findLine(size_t pos, const struct DisplayInfo *disp) {
   int left = 0;
-  int right = disp->lines + 1;
+  int right = disp->lines;
   int mid;
 
   while (left <= right) {
@@ -143,8 +143,7 @@ int findLine(size_t pos, const struct DisplayInfo *disp) {
       right = mid - 1;
   }
 
-  // left-1 instead of mid since mid isnt guaranteed to be where
-  // the line offset <= pos when left and right converge
+  // return last line whose offset <= pos
   return left - 1;
 }
 
@@ -213,8 +212,12 @@ void displayInput(size_t pos, const struct TypingInfo *typing,
 
 void displayPageInfo(const struct TypingInfo *typing,
                      const struct DisplayInfo *disp) {
-  static char fmt[] = "Page (%d/%d): Use '[' or '] \n";
+  static char fmt[] = "\rPage: %d/%d";
+  static char controls[] =
+      " | Navigate with '[' or ']' (pages), ← ↑ → ↓ (cursor)\n";
+
   printf(fmt, typing->currPage + 1, disp->pages + 1);
+  printf("%s", controls);
 }
 
 void displayTypingStats(const struct TypingStats *tStats) {
