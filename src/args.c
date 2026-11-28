@@ -1,10 +1,16 @@
 #include "args.h"
 #include <getopt.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <unistd.h>
 
+static char *progName = "typingGame";
+
 // read stdin first, if its empty then parse the args
 char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
+  // get program name (in case it was renamed)
+  progName = basename(argv[0]);
+
   if (!isatty(STDIN_FILENO)) {
     // try to read from stdin
     char *input = readStdin();
@@ -15,41 +21,28 @@ char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
   // copy of the defaults
   struct TextSize tsz = *defaultTsz;
 
-  // all the options
-  // the number is just its "id" returned by getopt_long_only etc.
-  // last option has to be all 0s for some reason
-  static struct option longOpts[] = {
-      {"pg", optional_argument, NULL, 1},
-      {"smin", optional_argument, NULL, 2},
-      {"smax", optional_argument, NULL, 3},
-      {"wmin", optional_argument, NULL, 4},
-      {"wmax", optional_argument, NULL, 5},
-      {"help", no_argument, NULL, 'h'},
-      {"h", no_argument, NULL, 'h'},
-      {0, 0, 0, 0},
-  };
-
-  int opt;
   // loop through every option given
-  while ((opt = getopt_long_only(argc, argv, "", longOpts, NULL)) != -1) {
+  int opt;
+  bool showHelp = false;
+  while ((opt = getopt(argc, argv, "p:s:S:w:W:h")) != -1) {
     switch (opt) {
-    case 1:
+    case 'p':
       tsz.paragraphs = parseIntOrExit(optarg);
       break;
-    case 2:
+    case 's':
       tsz.minSntn = parseIntOrExit(optarg);
       break;
-    case 3:
+    case 'S':
       tsz.maxSntn = parseIntOrExit(optarg);
       break;
-    case 4:
+    case 'w':
       tsz.minWordSntn = parseIntOrExit(optarg);
       break;
-    case 5:
+    case 'W':
       tsz.maxWordSntn = parseIntOrExit(optarg);
       break;
     case 'h':
-      usage(false);
+      showHelp = true;
       break;
     case '?':
     default:
@@ -57,8 +50,9 @@ char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
     }
   }
 
-  if (tsz.maxSntn < tsz.minSntn || tsz.maxWordSntn < tsz.minWordSntn)
-    usage(true);
+  if (showHelp)
+    usage(false);
+  validateTsz(&tsz);
 
   return generateText(&tsz);
 }
@@ -109,24 +103,41 @@ int parseIntOrExit(char *str) {
   return num;
 }
 
+// tsz must have valid values, otherwise show the help message
+void validateTsz(const struct TextSize *tsz) {
+  int paragraphs = tsz->paragraphs;
+  int minSntn = tsz->minSntn;
+  int maxSntn = tsz->maxSntn;
+  int minWordSntn = tsz->minWordSntn;
+  int maxWordSntn = tsz->maxWordSntn;
+
+  bool anyNegative = paragraphs < 0 || minSntn < 0 || maxSntn < 0 ||
+                     minWordSntn < 0 || maxWordSntn < 0;
+  bool invalidRange = minSntn > maxSntn || minWordSntn > maxWordSntn;
+
+  if (anyNegative || invalidRange)
+    usage(true);
+}
+
 // help message
 void usage(bool invalid) {
   static const char MSG[] =
-      "Usage: typingGame [-pg -smin -smax -wmin -wmax -h -help]\n\n"
+      "Usage: %s [-p -s -S -w -W -h]\n\n"
+      "A typing game in the terminal.\n"
+      "Navigate the text via arrow keys (cursor) and '[' or ']' (pages).\n\n"
       "Options:\n"
-      "    -pg \t:no. of paragraphs\t\t\t(default: 2)\n"
-      "    -smin \t:minimum no. of sentences per paragraph\t(default: 3)\n"
-      "    -smax \t:maximum no. of sentences per paragraph\t(default: 5)\n"
-      "    -wmin \t:minimum no. of words per sentence\t(default: 4)\n"
-      "    -wmax \t:maximum no. of words per sentence\t(default: 6)\n"
-      "    -h/-help \t:prints this help message\n\n"
-      "Each arg must be passed either as '-arg=value' or '--arg=value'\n"
-      "You can also pipe another program's output into this, but it won't be "
-      "formatted\n";
+      "    -p \t:no. of paragraphs\t\t\t(default: 2)\n"
+      "    -s \t:minimum no. of sentences per paragraph\t(default: 3)\n"
+      "    -S \t:maximum no. of sentences per paragraph\t(default: 5)\n"
+      "    -w \t:minimum no. of words per sentence\t(default: 4)\n"
+      "    -W \t:maximum no. of words per sentence\t(default: 6)\n"
+      "    -h \t:shows this help message\n\n"
+      "Options are for the built-in text generator.\n"
+      "Alternatively, you can pipe your own text through stdin\n";
 
   if (invalid)
-    fprintf(stderr, "Invalid args.\n\n");
-  fprintf(stderr, "%s", MSG);
+    fprintf(stderr, "Invalid options.\n");
+  fprintf(stderr, MSG, progName);
 
   exit(invalid);
 }
