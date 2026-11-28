@@ -20,6 +20,7 @@ static void handleSignal(int sig);
 int saveTermState(void) {
   return tcgetattr(getTtyFD(), &old);
 }
+
 int restoreTermState(void) {
   return tcsetattr(getTtyFD(), TCSAFLUSH, &old);
 }

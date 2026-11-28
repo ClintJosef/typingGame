@@ -6,13 +6,13 @@
 #include <string.h>
 
 /*
-words taken from /usr/share/dict/words
-bash commands to populate these (assuming $words is the path to ^):
+  words taken from /usr/share/dict/words
+  bash commands to populate these (assuming $words is the path to ^):
   upper.txt: grep '^[[:upper:]][[:lower:]]\+$' $words | grep -Ee '^.{3,10}$' > \
              words/upper.txt
   lower.txt: grep '^[[:lower:]]\+$' $words | grep -Ee '^.{3,10}$' > \
              words/lower.txt
-adjust {3,10} for the length range of the words
+  adjust {3,10} for the length range of the words
 */
 
 char *generateText(const struct TextSize *tsz) {

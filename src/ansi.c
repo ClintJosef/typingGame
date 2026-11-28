@@ -39,12 +39,15 @@ void ansiPrint(int modes, ...) {
 void moveCursor(int cursorPos, int col) {
   printf("\033[%d;%df", cursorPos, col);
 }
+
 void moveToCol(int col) {
   printf("\033[%dG", col);
 }
+
 void resetModes(void) {
   ansiPrint(1, RESET);
 }
+
 void eraseLine(void) {
   ansiPrint(1, ERASE_LINE);
 }
@@ -53,18 +56,23 @@ void eraseLine(void) {
 void hideCursor(void) {
   write(STDOUT_FILENO, HIDDEN, strlen(HIDDEN));
 }
+
 void showCursor(void) {
   write(STDOUT_FILENO, SHOWN, strlen(SHOWN));
 }
+
 void eraseScreen(void) {
   write(STDOUT_FILENO, ERASE_SCREEN, strlen(ERASE_SCREEN));
 }
+
 void eraseCurToEnd(void) {
   write(STDOUT_FILENO, ERASE_CUR_TO_END, strlen(ERASE_CUR_TO_END));
 }
+
 void saveScreen(void) {
   write(STDOUT_FILENO, SAVE_SCREEN, strlen(SAVE_SCREEN));
 }
+
 void restoreScreen(void) {
   write(STDOUT_FILENO, RESTORE_SCREEN, strlen(RESTORE_SCREEN));
 }

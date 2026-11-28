@@ -166,7 +166,8 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
       if (c == text[i]) {
         charStates[i] = CORRECT;
         userStats.correct++;
-      } else
+      }
+      else
         charStates[i] = INCORRECT;
 
       input[i] = c;

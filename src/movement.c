@@ -31,13 +31,15 @@ size_t moveY(size_t pos, int dir, const struct TypingInfo *typing,
   do {
     newLine = wrap(newLine + dir, firstLine, lastLine);
     lineLen = getLineLength(newLine, textLen, disp);
-  } while (lineLen < 2);
+  }
+  while (lineLen < 2);
 
   // move to end of line if line is too short, otherwise to savedCol
   if (lineLen < savedCol) {
     savedCol = col;
     col = lineLen - 2;
-  } else
+  }
+  else
     col = savedCol;
 
   return disp->lineOffsets[newLine] + col;
@@ -62,13 +64,13 @@ size_t moveX(size_t pos, int dir, const struct TypingInfo *typing,
 int wrap(int a, int min, int max) {
   int range = max - min + 1;
   /*
-  1. (a - min) % range ensures a > -range
-  2. + range ensures a >= 0
-  3. % range ensures 0 <= a < range
-  4. + min ensures min <= a < range + min
+    1. (a - min) % range ensures a > -range
+    2. + range ensures a >= 0
+    3. % range ensures 0 <= a < range
+    4. + min ensures min <= a < range + min
 
-  since range is inclusive of max, this becomes:
-  min <= a <= max
+    since range is inclusive of max, this becomes:
+    min <= a <= max
   */
   return min + ((a - min) % range + range) % range;
 }

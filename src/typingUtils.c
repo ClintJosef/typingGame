@@ -24,9 +24,11 @@ static _Atomic(bool) cheating = false;
 void setCheatThreshold(int threshold) {
   cheatThreshold = threshold;
 }
+
 void setCheating(void) {
   cheating = true;
 }
+
 bool isCheating(void) {
   return cheating;
 }
@@ -175,12 +177,10 @@ void displayInput(size_t pos, const struct TypingInfo *typing,
 
   // skip trailing newlines
   int start = 0;
-  while (text[start] == '\n') {
+  while (text[start] == '\n')
     start++;
-  }
-  if (pos - userOffset < start) {
+  if (pos - userOffset < start)
     pos += start;
-  }
 
   for (int i = start; i < pageSize; i++) {
     userPos = i + userOffset;
