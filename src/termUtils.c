@@ -65,7 +65,7 @@ void init(void) {
 // see https://www.man7.org/linux/man-pages/man7/signal-safety.7.html
 void cleanup(void) {
   // flush any io still being processed
-  if (tcflush(STDOUT_FILENO, TCIOFLUSH) == -1)
+  if (tcflush(getTtyFD(), TCIOFLUSH) == -1)
     _exit(EXIT_FAILURE);
 
   // restore terminal and un-hide cursor
