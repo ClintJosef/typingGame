@@ -15,7 +15,8 @@
   adjust {3,10} for the length range of the words
 */
 
-char *generateText(const struct TextSize *tsz) {
+// generate text of a specified size with a given seed
+char *generateText(int seed, const struct TextSize *tsz) {
   // .h files generated in output/
   char *lower = (char *)words_lower_txt;
   char *upper = (char *)words_upper_txt;
@@ -26,6 +27,9 @@ char *generateText(const struct TextSize *tsz) {
 
   char *text = calloc(1, sizeof(char));
   size_t textSize = 0;
+
+  // set seed for random
+  srand(seed);
 
   for (int i = 0; i < tsz->paragraphs; i++) {
     // each generateText with {minSntn} - {maxSntn} sentences

@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
   int statsTicks = 30;
 
   int textOffset = 4;
+  int defaultSeed = time(NULL);
   struct TextSize defaultTsz = {
     .paragraphs = 2,
     .minSntn = 3,
@@ -34,8 +35,7 @@ int main(int argc, char *argv[]) {
 
   // setup
   setCheatThreshold(cheatThreshold);
-  srand(time(NULL));
-  char *text = parseArgs(argc, argv, &defaultTsz);
+  char *text = parseArgs(argc, argv, defaultSeed, &defaultTsz);
   init();
 
   // game itself

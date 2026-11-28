@@ -17,7 +17,7 @@ struct TextSize {
   int maxWordSntn;
 };
 
-char *generateText(const struct TextSize *tsz);
+char *generateText(int seed, const struct TextSize *tsz);
 char *randomWord(char *words, const struct WordsInfo *wi);
 void getWordsInfo(char *words, struct WordsInfo *wi);
 size_t appendStr(char **text, size_t size, char *add);

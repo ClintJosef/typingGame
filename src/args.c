@@ -7,7 +7,8 @@
 static char *progName = "typingGame";
 
 // read stdin first, if its empty then parse the args
-char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
+char *parseArgs(int argc, char *argv[], int defaultSeed,
+                const struct TextSize *defaultTsz) {
   // get program name (in case it was renamed)
   progName = basename(argv[0]);
 
@@ -20,11 +21,12 @@ char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
 
   // copy of the defaults
   struct TextSize tsz = *defaultTsz;
+  int seed = defaultSeed;
 
   // loop through every option given
   int opt;
   bool showHelp = false;
-  while ((opt = getopt(argc, argv, "p:s:S:w:W:h")) != -1) {
+  while ((opt = getopt(argc, argv, "p:s:S:w:W:x:h")) != -1) {
     switch (opt) {
     case 'p':
       tsz.paragraphs = parseIntOrExit(optarg);
@@ -41,6 +43,9 @@ char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
     case 'W':
       tsz.maxWordSntn = parseIntOrExit(optarg);
       break;
+    case 'x':
+      seed = parseIntOrExit(optarg);
+      break;
     case 'h':
       showHelp = true;
       break;
@@ -54,7 +59,7 @@ char *parseArgs(int argc, char *argv[], const struct TextSize *defaultTsz) {
     usage(false);
   validateTsz(&tsz);
 
-  return generateText(&tsz);
+  return generateText(seed, &tsz);
 }
 
 char *readStdin(void) {
@@ -131,6 +136,7 @@ void usage(bool invalid) {
     "    -S \t:maximum no. of sentences per paragraph\t(default: 5)\n"
     "    -w \t:minimum no. of words per sentence\t(default: 4)\n"
     "    -W \t:maximum no. of words per sentence\t(default: 6)\n"
+    "    -x \t:seed to generate text\t\t\t(default: system time)\n"
     "    -h \t:shows this help message\n\n"
     "Options are for the built-in text generator.\n"
     "Alternatively, you can pipe your own text through stdin\n";
