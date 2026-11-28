@@ -127,17 +127,17 @@ void validateTsz(const struct TextSize *tsz) {
 // help message
 void usage(bool invalid) {
   static const char MSG[] =
-    "Usage: %s [-p -s -S -w -W -h]\n\n"
+    "Usage: %s [-p paragraphs] [-s sentences] [-S sentences] [-w words] [-W words] [-x seed] [-h]\n\n"
     "A typing game in the terminal.\n"
     "Navigate the text via arrow keys (cursor) and '[' or ']' (pages).\n\n"
     "Options:\n"
-    "    -p \t:no. of paragraphs\t\t\t(default: 2)\n"
-    "    -s \t:minimum no. of sentences per paragraph\t(default: 3)\n"
-    "    -S \t:maximum no. of sentences per paragraph\t(default: 5)\n"
-    "    -w \t:minimum no. of words per sentence\t(default: 4)\n"
-    "    -W \t:maximum no. of words per sentence\t(default: 6)\n"
-    "    -x \t:seed to generate text\t\t\t(default: system time)\n"
-    "    -h \t:shows this help message\n\n"
+    "    -p <paragraphs>\t:no. of paragraphs\t\t\t(default: 2)\n"
+    "    -s <sentences>\t:minimum no. of sentences per paragraph\t(default: 3)\n"
+    "    -S <sentences>\t:maximum no. of sentences per paragraph\t(default: 5)\n"
+    "    -w <words>\t\t:minimum no. of words per sentence\t(default: 4)\n"
+    "    -W <words>\t\t:maximum no. of words per sentence\t(default: 6)\n"
+    "    -x <seed>\t\t:seed to generate text\t\t\t(default: system time)\n"
+    "    -h \t\t\t:shows this help message\n\n"
     "Options are for the built-in text generator.\n"
     "Alternatively, you can pipe your own text through stdin\n";
 
