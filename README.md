@@ -21,7 +21,7 @@ build/typingGame
 ```
 
 ## Usage:
-Run with ™¡'-h':
+Run with -h:
 ```
 > build/typingGame -h
 Usage: typingGame [-p paragraphs] [-s sentences] [-S sentences] [-w words] [-W words] [-x seed] [-h]
