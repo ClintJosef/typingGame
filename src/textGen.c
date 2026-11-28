@@ -17,7 +17,7 @@
 
 // generate text of a specified size with a given seed
 char *generateText(int seed, const struct TextSize *tsz) {
-  // .h files generated in output/
+  // .h files generated in build/words
   char *lower = (char *)words_lower_txt;
   char *upper = (char *)words_upper_txt;
 
