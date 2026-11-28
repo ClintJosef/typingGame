@@ -8,7 +8,7 @@ static char *progName = "typingGame";
 
 // read stdin first, if its empty then parse the args
 char *parseArgs(int argc, char *argv[], int defaultSeed,
-                const struct TextSize *defaultTsz) {
+                const TextSize *defaultTsz) {
   // get program name (in case it was renamed)
   progName = basename(argv[0]);
 
@@ -20,7 +20,7 @@ char *parseArgs(int argc, char *argv[], int defaultSeed,
   }
 
   // copy of the defaults
-  struct TextSize tsz = *defaultTsz;
+  TextSize tsz = *defaultTsz;
   int seed = defaultSeed;
 
   // loop through every option given
@@ -109,7 +109,7 @@ int parseIntOrExit(char *str) {
 }
 
 // tsz must have valid values, otherwise show the help message
-void validateTsz(const struct TextSize *tsz) {
+void validateTsz(const TextSize *tsz) {
   int paragraphs = tsz->paragraphs;
   int minSntn = tsz->minSntn;
   int maxSntn = tsz->maxSntn;

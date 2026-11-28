@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
 
   int textOffset = 4;
   int defaultSeed = time(NULL);
-  struct TextSize defaultTsz = {
+  TextSize defaultTsz = {
     .paragraphs = 2,
     .minSntn = 3,
     .maxSntn = 5,
@@ -56,20 +56,20 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
   char *input = calloc(size + 1, sizeof(char));
 
   CharState *charStates = calloc(size, sizeof(CharState));
-  struct WinSize winSize = getWinSize();
-  struct DisplayInfo disp = {
+  WinSize winSize = getWinSize();
+  DisplayInfo disp = {
     .textOffset = textOffset + 1,   // +1 offset for page number
     .rows = winSize.rows,
     .cols = winSize.cols
   };
-  struct TypingInfo typing = {
+  TypingInfo typing = {
     .textLen = size,
     .currPage = 0,
     .userInput = input,
     .text = text,
     .charStates = charStates
   };
-  struct UserStats userStats = {
+  UserStats userStats = {
     .typed = 0,
     .correct = 0,
     .textLen = size

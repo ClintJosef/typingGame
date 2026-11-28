@@ -13,7 +13,7 @@
 #include <termios.h>
 #include <unistd.h>
 
-const struct Colors COLORS = {
+const Colors COLORS = {
   .untyped = "\033[2m", .incorrect = "\033[31m", .correct = "\033[38;5;76m"
 };
 
@@ -48,7 +48,7 @@ const char *getCharColor(CharState charState) {
 
 // basically calculates text metadata (DisplayInfo)
 // returns the count of non-newline characters
-size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
+size_t getPages(const TypingInfo *typing, DisplayInfo *disp) {
   int pageHeight = disp->rows - disp->textOffset - 1;
   size_t len = typing->textLen;
   size_t maxPages = len / pageHeight;
@@ -115,7 +115,7 @@ size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
 }
 
 // update current page
-void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp) {
+void getPage(TypingInfo *typing, const DisplayInfo *disp) {
   int currPage = typing->currPage;
   int pages = disp->pages;
   size_t offset = disp->pageOffsets[currPage];
@@ -128,7 +128,7 @@ void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp) {
 
 // find line based on index using binary search
 // works because an offset array is already sorted
-int findLine(size_t pos, const struct DisplayInfo *disp) {
+int findLine(size_t pos, const DisplayInfo *disp) {
   int left = 0;
   int right = disp->lines;
   int mid;
@@ -146,7 +146,7 @@ int findLine(size_t pos, const struct DisplayInfo *disp) {
   return left - 1;
 }
 
-int getLineLength(int line, size_t textLen, const struct DisplayInfo *disp) {
+int getLineLength(int line, size_t textLen, const DisplayInfo *disp) {
   size_t start = disp->lineOffsets[line];
   size_t end = line < disp->lines ? disp->lineOffsets[line + 1] : textLen;
 
@@ -154,8 +154,8 @@ int getLineLength(int line, size_t textLen, const struct DisplayInfo *disp) {
 }
 
 // display all text-related stuff
-void updateDisplay(size_t pos, const struct TypingInfo *typing,
-                   const struct DisplayInfo *disp) {
+void updateDisplay(size_t pos, const TypingInfo *typing,
+                   const DisplayInfo *disp) {
   moveCursor(disp->textOffset - 1, 1);
   if (disp->pages >= 1)
     displayPageInfo(typing, disp);
@@ -164,8 +164,8 @@ void updateDisplay(size_t pos, const struct TypingInfo *typing,
 
 // colorizes each character based their typing state
 // does not write past the screen
-void displayInput(size_t pos, const struct TypingInfo *typing,
-                  const struct DisplayInfo *disp) {
+void displayInput(size_t pos, const TypingInfo *typing,
+                  const DisplayInfo *disp) {
   // assuming getPage was called
   char *text = typing->page;
   int currPage = typing->currPage;
@@ -207,22 +207,21 @@ void displayInput(size_t pos, const struct TypingInfo *typing,
   }
 }
 
-void displayPageInfo(const struct TypingInfo *typing,
-                     const struct DisplayInfo *disp) {
+void displayPageInfo(const TypingInfo *typing, const DisplayInfo *disp) {
   static char fmt[] = "\rPage %d of %d\n";
 
   printf(fmt, typing->currPage + 1, disp->pages + 1);
 }
 
-void displayTypingStats(const struct TypingStats *tStats) {
+void displayTypingStats(const TypingStats *tStats) {
   static char fmt[] =
     "\rWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf%%, Progress: %.0lf%%";
   eraseLine();
   printf(fmt, tStats->wpm, tStats->avgWpm, tStats->accuracy, tStats->progress);
 }
 
-void calculateTypingStats(const struct UserStats *userStats,
-                          struct TypingStats *tStats, double elapsedTime) {
+void calculateTypingStats(const UserStats *userStats, TypingStats *tStats,
+                          double elapsedTime) {
   // pretty useful
   static double prevTime = 0;
   static double prevTyped = 0;

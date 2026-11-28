@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 static struct termios old;
-static struct WinSize winSize;
+static WinSize winSize;
 
 static void updateWinSize(void);
 static void handleSignal(int sig);
@@ -130,7 +130,7 @@ int pollChar(char *c, int maxBufSize) {
   return 0;
 }
 
-struct WinSize getWinSize(void) {
+WinSize getWinSize(void) {
   return winSize;
 }
 

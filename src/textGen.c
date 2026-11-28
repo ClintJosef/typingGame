@@ -16,12 +16,12 @@
 */
 
 // generate text of a specified size with a given seed
-char *generateText(int seed, const struct TextSize *tsz) {
+char *generateText(int seed, const TextSize *tsz) {
   // .h files generated in build/words
   char *lower = (char *)words_lower_txt;
   char *upper = (char *)words_upper_txt;
 
-  struct WordsInfo lowerFi, upperFi;
+  WordsInfo lowerFi, upperFi;
   getWordsInfo(lower, &lowerFi);
   getWordsInfo(upper, &upperFi);
 
@@ -68,7 +68,7 @@ char *generateText(int seed, const struct TextSize *tsz) {
 
 // takes a char array of words separated by newline
 // outputs a random word from it
-char *randomWord(char *words, const struct WordsInfo *wi) {
+char *randomWord(char *words, const WordsInfo *wi) {
   size_t line = randRange(0, wi->lines - 1);
   size_t offset = wi->lineOffsets[line];
   size_t wordSize = wi->lineLengths[line];
@@ -81,7 +81,7 @@ char *randomWord(char *words, const struct WordsInfo *wi) {
 }
 
 // count the number of lines and their byte offset in a char array
-void getWordsInfo(char *words, struct WordsInfo *wi) {
+void getWordsInfo(char *words, WordsInfo *wi) {
   size_t capac = 16;
   size_t line = 0;
   size_t *offsets = calloc(capac, sizeof(size_t));

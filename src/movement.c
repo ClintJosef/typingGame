@@ -1,8 +1,8 @@
 #include "movement.h"
 
 // move cursor up/down
-size_t moveY(size_t pos, int dir, const struct TypingInfo *typing,
-             const struct DisplayInfo *disp) {
+size_t moveY(size_t pos, int dir, const TypingInfo *typing,
+             const DisplayInfo *disp) {
   static int savedCol = 0;
   static int currPage = 0;
 
@@ -46,8 +46,8 @@ size_t moveY(size_t pos, int dir, const struct TypingInfo *typing,
 }
 
 // move cursor left/right
-size_t moveX(size_t pos, int dir, const struct TypingInfo *typing,
-             const struct DisplayInfo *disp) {
+size_t moveX(size_t pos, int dir, const TypingInfo *typing,
+             const DisplayInfo *disp) {
   // skip trailing newlines when moving left
   // dont need to skip leading newlines
   // since thats handled in the main loop

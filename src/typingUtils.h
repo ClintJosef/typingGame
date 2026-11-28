@@ -7,29 +7,29 @@
 // UNTYPED = 0 for calloc (just to be safe)
 typedef enum { UNTYPED = 0, INCORRECT, CORRECT } CharState;
 
-struct Colors {
+typedef struct {
   const char *untyped;
   const char *incorrect;
   const char *correct;
-};
+} Colors;
 
 // 3 size_t's are apparently too big to be 'safely' atomic
 // which is important because eventually the stopwatch and main thread
 // will be sharing one of these
-struct UserStats {
+typedef struct {
   int correct;
   int typed;
   int textLen;
-};
+} UserStats;
 
-struct TypingStats {
+typedef struct {
   double wpm;
   double avgWpm;
   double progress;
   double accuracy;
-};
+} TypingStats;
 
-struct TypingInfo {
+typedef struct {
   char *userInput;
   char *text;
   size_t textLen;
@@ -37,9 +37,9 @@ struct TypingInfo {
   int pageSize;
   char *page;
   CharState *charStates;
-};
+} TypingInfo;
 
-struct DisplayInfo {
+typedef struct {
   int textOffset;
   int pages;
   int lines;
@@ -49,31 +49,29 @@ struct DisplayInfo {
   size_t *lineOffsets;
   int rows;
   int cols;
-};
+} DisplayInfo;
 
-extern const struct Colors COLORS;
+extern const Colors COLORS;
 
 void setCheatThreshold(int threshold);
 void setCheating(void);
 bool isCheating(void);
 
 const char *getCharColor(CharState charState);
-size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp);
-void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp);
-int getPageSize(const struct TypingInfo *typing,
-                const struct DisplayInfo *disp);
-int findLine(size_t pos, const struct DisplayInfo *disp);
-int getLineLength(int line, size_t textLen, const struct DisplayInfo *disp);
+size_t getPages(const TypingInfo *typing, DisplayInfo *disp);
+void getPage( TypingInfo *typing, const DisplayInfo *disp);
+int getPageSize(const TypingInfo *typing, const DisplayInfo *disp);
+int findLine(size_t pos, const DisplayInfo *disp);
+int getLineLength(int line, size_t textLen, const DisplayInfo *disp);
 
-void updateDisplay(size_t pos, const struct TypingInfo *typing,
-                   const struct DisplayInfo *disp);
-void displayPageInfo(const struct TypingInfo *typing,
-                     const struct DisplayInfo *disp);
-void displayInput(size_t pos, const struct TypingInfo *typing,
-                  const struct DisplayInfo *disp);
-void displayTypingStats(const struct TypingStats *tStats);
+void updateDisplay(size_t pos, const TypingInfo *typing,
+                   const DisplayInfo *disp);
+void displayPageInfo(const TypingInfo *typing, const DisplayInfo *disp);
+void displayInput(size_t pos, const TypingInfo *typing,
+                  const DisplayInfo *disp);
+void displayTypingStats(const TypingStats *tStats);
 
-void calculateTypingStats(const struct UserStats *userStats,
-                          struct TypingStats *tStats, double elapsedTime);
+void calculateTypingStats(const UserStats *userStats, TypingStats *tStats,
+                          double elapsedTime);
 
 #endif

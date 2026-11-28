@@ -3,10 +3,10 @@
 
 #include <stdio.h>
 
-struct WinSize {
+typedef struct {
   int rows;
   int cols;
-};
+} WinSize;
 
 int saveTermState(void);
 int restoreTermState(void);
@@ -16,6 +16,6 @@ void cleanup(void);
 int getTtyFD(void);
 int pollChar(char *c, int maxBufSize);
 FILE *getInputStream(void);
-struct WinSize getWinSize(void);
+WinSize getWinSize(void);
 
 #endif

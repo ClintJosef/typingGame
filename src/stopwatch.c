@@ -20,7 +20,7 @@ static struct timespec start;
 // for structs its still recommended to access them via atomic_load()
 static _Atomic(bool) running;
 static _Atomic(bool) stopped;
-static _Atomic(struct UserStats) stats;
+static _Atomic(UserStats) stats;
 
 static void *stopwatchThread(void *arg);
 
@@ -58,7 +58,7 @@ void startStopwatch(long long tickMs, int statsTicks) {
   running = true;
   stopped = false;
 
-  struct SWThreadArgs *swArgs = malloc(sizeof(struct SWThreadArgs));
+  SWThreadArgs *swArgs = malloc(sizeof(SWThreadArgs));
   swArgs->tickMs = tickMs;
   swArgs->statsTicks = statsTicks;
 
@@ -66,7 +66,7 @@ void startStopwatch(long long tickMs, int statsTicks) {
 }
 
 // update stats from other threads
-void updateStats(const struct UserStats *userStats) {
+void updateStats(const UserStats *userStats) {
   stats = *userStats;
 }
 
@@ -88,7 +88,7 @@ double tsToDouble(const struct timespec *ts) {
 static void *stopwatchThread(void *arg) {
   static char timeFmt[] = "\rTime taken: %.1lfs\n";
 
-  struct SWThreadArgs *swArgs = (struct SWThreadArgs *)arg;
+  SWThreadArgs *swArgs = (SWThreadArgs *)arg;
 
   struct timespec sleepTime;
   msToTs(swArgs->tickMs, &sleepTime);
@@ -96,8 +96,8 @@ static void *stopwatchThread(void *arg) {
   struct timespec elapsed;
   double elapsedTime;
 
-  struct UserStats userStats;
-  struct TypingStats tStats;
+  UserStats userStats;
+  TypingStats tStats;
 
   // start the stopwatch
   startTs();
