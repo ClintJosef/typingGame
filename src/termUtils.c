@@ -17,8 +17,12 @@ static struct WinSize winSize;
 static void updateWinSize(void);
 static void handleSignal(int sig);
 
-int saveTermState(void) { return tcgetattr(getTtyFD(), &old); }
-int restoreTermState(void) { return tcsetattr(getTtyFD(), TCSAFLUSH, &old); }
+int saveTermState(void) {
+  return tcgetattr(getTtyFD(), &old);
+}
+int restoreTermState(void) {
+  return tcsetattr(getTtyFD(), TCSAFLUSH, &old);
+}
 
 int disableCanonicalInput(void) {
   // read termios and tcsetattr man pages
@@ -125,7 +129,9 @@ int pollChar(char *c, int maxBufSize) {
   return 0;
 }
 
-struct WinSize getWinSize(void) { return winSize; }
+struct WinSize getWinSize(void) {
+  return winSize;
+}
 
 static void updateWinSize(void) {
   struct winsize ws;

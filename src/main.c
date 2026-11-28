@@ -25,11 +25,11 @@ int main(int argc, char *argv[]) {
 
   int textOffset = 4;
   struct TextSize defaultTsz = {
-      .paragraphs = 2,
-      .minSntn = 3,
-      .maxSntn = 5,
-      .minWordSntn = 4,
-      .maxWordSntn = 6,
+    .paragraphs = 2,
+    .minSntn = 3,
+    .maxSntn = 5,
+    .minWordSntn = 4,
+    .maxWordSntn = 6,
   };
 
   // setup
@@ -54,17 +54,27 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
   // lotta game info
   int size = strlen(text);
   char *input = calloc(size + 1, sizeof(char));
+
   CharState *charStates = calloc(size, sizeof(CharState));
   struct WinSize winSize = getWinSize();
-  // +1 offset for page number
   struct DisplayInfo disp = {
-      .textOffset = textOffset + 1, .rows = winSize.rows, .cols = winSize.cols};
-  struct UserStats userStats = {.typed = 0, .correct = 0, .textLen = size};
-  struct TypingInfo typing = {.textLen = size,
-                              .currPage = 0,
-                              .userInput = input,
-                              .text = text,
-                              .charStates = charStates};
+    .textOffset = textOffset + 1,   // +1 offset for page number
+    .rows = winSize.rows,
+    .cols = winSize.cols
+  };
+  struct TypingInfo typing = {
+    .textLen = size,
+    .currPage = 0,
+    .userInput = input,
+    .text = text,
+    .charStates = charStates
+  };
+  struct UserStats userStats = {
+    .typed = 0,
+    .correct = 0,
+    .textLen = size
+  };
+
   size_t validChars = getPages(&typing, &disp);
   getPage(&typing, &disp);
 
@@ -185,6 +195,7 @@ bool startGame(char *text, int textOffset, int maxBufSize) {
   free(pagePositions);
   free(disp.pageOffsets);
   free(disp.lineOffsets);
+  free(disp.pageLines);
 
   return isCheating();
 }

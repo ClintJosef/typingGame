@@ -122,18 +122,18 @@ void validateTsz(const struct TextSize *tsz) {
 // help message
 void usage(bool invalid) {
   static const char MSG[] =
-      "Usage: %s [-p -s -S -w -W -h]\n\n"
-      "A typing game in the terminal.\n"
-      "Navigate the text via arrow keys (cursor) and '[' or ']' (pages).\n\n"
-      "Options:\n"
-      "    -p \t:no. of paragraphs\t\t\t(default: 2)\n"
-      "    -s \t:minimum no. of sentences per paragraph\t(default: 3)\n"
-      "    -S \t:maximum no. of sentences per paragraph\t(default: 5)\n"
-      "    -w \t:minimum no. of words per sentence\t(default: 4)\n"
-      "    -W \t:maximum no. of words per sentence\t(default: 6)\n"
-      "    -h \t:shows this help message\n\n"
-      "Options are for the built-in text generator.\n"
-      "Alternatively, you can pipe your own text through stdin\n";
+    "Usage: %s [-p -s -S -w -W -h]\n\n"
+    "A typing game in the terminal.\n"
+    "Navigate the text via arrow keys (cursor) and '[' or ']' (pages).\n\n"
+    "Options:\n"
+    "    -p \t:no. of paragraphs\t\t\t(default: 2)\n"
+    "    -s \t:minimum no. of sentences per paragraph\t(default: 3)\n"
+    "    -S \t:maximum no. of sentences per paragraph\t(default: 5)\n"
+    "    -w \t:minimum no. of words per sentence\t(default: 4)\n"
+    "    -W \t:maximum no. of words per sentence\t(default: 6)\n"
+    "    -h \t:shows this help message\n\n"
+    "Options are for the built-in text generator.\n"
+    "Alternatively, you can pipe your own text through stdin\n";
 
   if (invalid)
     fprintf(stderr, "Invalid options.\n");

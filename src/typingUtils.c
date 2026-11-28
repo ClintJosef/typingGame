@@ -14,15 +14,22 @@
 #include <unistd.h>
 
 const struct Colors COLORS = {
-    .untyped = "\033[2m", .incorrect = "\033[31m", .correct = "\033[38;5;76m"};
+  .untyped = "\033[2m", .incorrect = "\033[31m", .correct = "\033[38;5;76m"
+};
 
 // max wpm limit before it thinks user is cheating (can be set)
 static int cheatThreshold = INT32_MAX;
 static _Atomic(bool) cheating = false;
 
-void setCheatThreshold(int threshold) { cheatThreshold = threshold; }
-void setCheating(void) { cheating = true; }
-bool isCheating(void) { return cheating; }
+void setCheatThreshold(int threshold) {
+  cheatThreshold = threshold;
+}
+void setCheating(void) {
+  cheating = true;
+}
+bool isCheating(void) {
+  return cheating;
+}
 
 const char *getCharColor(CharState charState) {
   switch (charState) {
@@ -108,23 +115,13 @@ size_t getPages(const struct TypingInfo *typing, struct DisplayInfo *disp) {
 // update current page
 void getPage(struct TypingInfo *typing, const struct DisplayInfo *disp) {
   int currPage = typing->currPage;
+  int pages = disp->pages;
   size_t offset = disp->pageOffsets[currPage];
+  size_t end =
+    currPage < pages ? disp->pageOffsets[currPage + 1] : typing->textLen;
+
   typing->page = &typing->text[offset];
-  int pageSize;
-
-  // only one page -> just the whole text length
-  if (disp->pages < 1)
-    pageSize = typing->textLen;
-
-  // last page -> start of this page up to the end of the text
-  else if (currPage == disp->pages)
-    pageSize = typing->textLen - disp->pageOffsets[currPage];
-
-  // between 1 and {pages} -> start of this page up to the next
-  else
-    pageSize = disp->pageOffsets[currPage + 1] - disp->pageOffsets[currPage];
-
-  typing->pageSize = pageSize;
+  typing->pageSize = end - offset;
 }
 
 // find line based on index using binary search
@@ -212,17 +209,14 @@ void displayInput(size_t pos, const struct TypingInfo *typing,
 
 void displayPageInfo(const struct TypingInfo *typing,
                      const struct DisplayInfo *disp) {
-  static char fmt[] = "\rPage: %d/%d";
-  static char controls[] =
-      " | Navigate with '[' or ']' (pages), ← ↑ → ↓ (cursor)\n";
+  static char fmt[] = "\rPage %d of %d\n";
 
   printf(fmt, typing->currPage + 1, disp->pages + 1);
-  printf("%s", controls);
 }
 
 void displayTypingStats(const struct TypingStats *tStats) {
   static char fmt[] =
-      "\rWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf%%, Progress: %.0lf%%";
+    "\rWpm: %.0lf, Avg Wpm: %.0lf, Accuracy: %.0lf%%, Progress: %.0lf%%";
   eraseLine();
   printf(fmt, tStats->wpm, tStats->avgWpm, tStats->accuracy, tStats->progress);
 }

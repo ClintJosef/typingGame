@@ -66,7 +66,9 @@ void startStopwatch(long long tickMs, int statsTicks) {
 }
 
 // update stats from other threads
-void updateStats(const struct UserStats *userStats) { stats = *userStats; }
+void updateStats(const struct UserStats *userStats) {
+  stats = *userStats;
+}
 
 // convert miliseconds to timespec
 void msToTs(long long ms, struct timespec *ts) {
